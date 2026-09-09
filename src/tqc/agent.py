@@ -1,5 +1,5 @@
 import copy
-from typing import Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -95,19 +95,27 @@ class TQCAgent:
         batch: Union[
             Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
             Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+            Any,
         ],
+        batch_size: int = 256,
     ) -> Dict[str, float]:
         """
         Perform a single gradient update step across critics, actor, and temperature.
 
         Args:
-            batch: Tuple of (states, actions, rewards, next_states, dones)
+            batch: Tuple of (states, actions, rewards, next_states, dones) OR a ReplayBuffer
+            batch_size: Mini-batch size when sampling from a ReplayBuffer (default 256)
 
         Returns:
             metrics: Dictionary containing losses, alpha, and Q-statistics
         """
+        if hasattr(batch, "sample"):
+            sampled_batch = batch.sample(batch_size)
+        else:
+            sampled_batch = batch
+
         states, actions, rewards, next_states, dones = [
-            torch.as_tensor(x, dtype=torch.float32, device=self.device) for x in batch
+            torch.as_tensor(x, dtype=torch.float32, device=self.device) for x in sampled_batch
         ]
 
         # Ensure rewards and dones are shape (B, 1)

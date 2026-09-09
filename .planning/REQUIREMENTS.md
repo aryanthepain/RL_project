@@ -24,15 +24,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Environment & Buffer Infrastructure (ENV)
 
-- [ ] **ENV-01**: High-performance uniform replay buffer storing $(s, a, r, s', \text{done})$ transitions with capacity $10^6$ and fast batch sampling.
-- [ ] **ENV-02**: Standardized Gymnasium MuJoCo environment harness supporting HalfCheetah-v4, Hopper-v4, Walker2d-v4, Ant-v4, and Humanoid-v4 with observation and action space validation.
-- [ ] **ENV-03**: Seed management system ensuring reproducibility across PyTorch, NumPy, Python random, and Gymnasium environment state.
+- [x] **ENV-01**: High-performance uniform replay buffer storing $(s, a, r, s', \text{done})$ transitions with capacity $10^6$ and fast batch sampling.
+- [x] **ENV-02**: Standardized Gymnasium MuJoCo environment harness supporting HalfCheetah-v4, Hopper-v4, Walker2d-v4, Ant-v4, and Humanoid-v4 with observation and action space validation.
+- [x] **ENV-03**: Seed management system ensuring reproducibility across PyTorch, NumPy, Python random, and Gymnasium environment state.
 
 ### Training & Benchmarking Pipeline (EXP)
 
-- [ ] **EXP-01**: Multi-seed training pipeline running 1M/3M steps per environment with periodic deterministic evaluation episodes.
-- [ ] **EXP-02**: Structured metric logger capturing evaluation returns, critic loss, actor loss, alpha value, and Q-estimation statistics.
-- [ ] **EXP-03**: Baseline comparison support (logging or running SAC baseline under identical evaluation protocols).
+- [x] **EXP-01**: Multi-seed training pipeline running 1M/3M steps per environment with periodic deterministic evaluation episodes.
+- [x] **EXP-02**: Structured metric logger capturing evaluation returns, critic loss, actor loss, alpha value, and Q-estimation statistics.
+- [x] **EXP-03**: Baseline comparison support (logging or running SAC baseline under identical evaluation protocols).
 
 ### Results Analysis & Publication Curves (VIZ)
 
@@ -74,12 +74,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ALGO-03 | Phase 2 | Complete |
 | ALGO-04 | Phase 2 | Complete |
 | ALGO-05 | Phase 2 | Complete |
-| ENV-01 | Phase 3 | Pending |
-| ENV-02 | Phase 3 | Pending |
-| ENV-03 | Phase 3 | Pending |
-| EXP-01 | Phase 3 | Pending |
-| EXP-02 | Phase 3 | Pending |
-| EXP-03 | Phase 3 | Pending |
+| ENV-01 | Phase 3 | Complete |
+| ENV-02 | Phase 3 | Complete |
+| ENV-03 | Phase 3 | Complete |
+| EXP-01 | Phase 3 | Complete |
+| EXP-02 | Phase 3 | Complete |
+| EXP-03 | Phase 3 | Complete |
 | VIZ-01 | Phase 4 | Pending |
 | VIZ-02 | Phase 4 | Pending |
 | VIZ-03 | Phase 4 | Pending |
