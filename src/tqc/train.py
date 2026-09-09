@@ -92,6 +92,10 @@ def train_tqc(
         f"State: {state_dim}, Action: {action_dim}, Drop Top: {agent.drop_top}, Device: {dev}"
     )
 
+    # Save initial untrained baseline checkpoint
+    if checkpoint_freq > 0:
+        agent.save(os.path.join(logger.exp_dir, "checkpoint_0.pt"))
+
     try:
         for step in range(1, total_timesteps + 1):
             # Action selection
