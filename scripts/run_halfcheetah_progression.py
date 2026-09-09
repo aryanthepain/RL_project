@@ -5,10 +5,12 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import argparse
+import gc
 import glob
 import re
 import time
 from typing import List, Tuple
+import imageio
 import numpy as np
 import torch
 from src.tqc.envs import get_env_dims, make_env
@@ -125,7 +127,6 @@ def run_progression_pipeline(
             grid_target_indices.append(grid_target_indices[-1])
 
     grid_target_indices = [max(0, min(total_ckpts - 1, i)) for i in grid_target_indices]
-    grid_frame_streams: List[List[np.ndarray]] = [[] for _ in range(6)]
 
     saved_video_paths: List[str] = []
     telemetry_records: List[dict] = []
@@ -134,6 +135,11 @@ def run_progression_pipeline(
     for idx_0, ckpt_path in enumerate(ckpts_to_evaluate):
         ckpt_idx = idx_0 + 1
         step_num = get_checkpoint_step(ckpt_path)
+        video_out = os.path.join(ckpt_video_dir, f"ckpt_{step_num:05d}.mp4")
+        saved_video_paths.append(video_out)
+
+        already_rendered = os.path.exists(video_out) and os.path.getsize(video_out) > 5000
+
         agent.load(ckpt_path)
 
         telemetry = rollout_checkpoint_with_telemetry(
@@ -147,34 +153,47 @@ def run_progression_pipeline(
             total_steps=total_timesteps,
             overlay=True,
             fps=fps,
+            render=not already_rendered,
         )
+
+        frames = telemetry.pop("frames", [])
+        if not already_rendered and frames:
+            save_video(frames, video_out, fps=fps)
+
+        del frames
         telemetry_records.append(telemetry)
+        gc.collect()
 
-        # Save individual checkpoint video
-        video_out = os.path.join(ckpt_video_dir, f"ckpt_{step_num:05d}.mp4")
-        save_video(telemetry["frames"], video_out, fps=fps)
-        saved_video_paths.append(video_out)
-
-        # Record for 6-way grid if in milestone list
-        for slot_idx, target_idx in enumerate(grid_target_indices):
-            if idx_0 == target_idx and not grid_frame_streams[slot_idx]:
-                grid_frame_streams[slot_idx] = telemetry["frames"]
-
-        if ckpt_idx % 10 == 0 or ckpt_idx == total_ckpts or smoke_test:
+        if ckpt_idx % 10 == 0 or ckpt_idx == total_ckpts or smoke_test or not already_rendered:
+            status_tag = "Cached" if already_rendered else "Saved"
             print(
-                f"[{ckpt_idx}/{total_ckpts}] Saved {video_out} | Return: {telemetry['total_return']:.1f} | Mean Speed: {np.mean(telemetry['velocities']):+.2f} m/s"
+                f"[{ckpt_idx}/{total_ckpts}] {status_tag} {video_out} | Return: {telemetry['total_return']:.1f} | Mean Speed: {np.mean(telemetry['velocities']):+.2f} m/s"
             )
 
     # Step 3: Create Synchronized 6-way 2x3 Grid Video
     print("\n=== Step 3: Synthesizing Synchronized 6-Way 2x3 Grid Comparison Video ===")
     grid_out_path = os.path.join(output_dir, "halfcheetah_6way_grid.mp4")
-    # Verify all 6 slots are populated
-    for i in range(6):
+    grid_frame_streams: List[List[np.ndarray]] = []
+    for target_idx in grid_target_indices:
+        vid_file = saved_video_paths[target_idx]
+        try:
+            reader = imageio.get_reader(vid_file)
+            stream = [frame for frame in reader]
+            reader.close()
+        except Exception as e:
+            print(f"[Warning] Failed to read {vid_file}: {e}")
+            stream = []
+        grid_frame_streams.append(stream)
+
+    # Fallback padding for any empty streams
+    for i in range(len(grid_frame_streams)):
         if not grid_frame_streams[i]:
             grid_frame_streams[i] = grid_frame_streams[max(0, i - 1)]
 
     tiled_frames = tile_grid_frames(grid_frame_streams, rows=2, cols=3, border_px=3)
     save_video(tiled_frames, grid_out_path, fps=fps)
+    del grid_frame_streams, tiled_frames
+    gc.collect()
     print(f"Saved 6-Way Grid Video -> {grid_out_path}")
 
     # Step 4: Stitch All Checkpoints into Master Chronological Montage

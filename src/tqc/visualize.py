@@ -69,6 +69,7 @@ def rollout_checkpoint_with_telemetry(
     total_steps: int = 10000,
     overlay: bool = True,
     fps: int = 30,
+    render: bool = True,
 ) -> Dict[str, Any]:
     """Execute evaluation rollout of an agent checkpoint while capturing per-frame telemetry.
 
@@ -83,11 +84,13 @@ def rollout_checkpoint_with_telemetry(
         total_steps: Total training steps.
         overlay: Whether to draw HUD overlay on frames.
         fps: Video playback frames per second.
+        render: Whether to render RGB frames (set to False for fast metric-only rollout).
 
     Returns:
         Dictionary containing frames, velocities, rewards, returns, actions, q_means.
     """
-    env = gym.make(env_id, render_mode="rgb_array")
+    render_mode = "rgb_array" if render else None
+    env = gym.make(env_id, render_mode=render_mode)
     state, _ = env.reset(seed=seed)
 
     frames: List[np.ndarray] = []
@@ -98,7 +101,7 @@ def rollout_checkpoint_with_telemetry(
     total_reward = 0.0
 
     for step in range(max_steps):
-        raw_frame = env.render()
+        raw_frame = env.render() if render else None
         action = agent.select_action(state, deterministic=True)
 
         # Compute critic Q-mean estimate for current (state, action)
