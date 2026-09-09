@@ -98,6 +98,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 3. Environment Harness, Replay Buffer & Training Pipeline | 2/2 | Complete | 2026-09-09 |
 | 4. Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves | 2/2 | Complete | 2026-09-09 |
 | 5. Policy Progression Visualization Across Spaced Checkpoints | 2/2 | Complete    | 2026-09-09 |
+| 6. Compute Hierarchy for Multi-Tier Benchmark Experiments | 2/2 | Complete | 2026-09-10 |
 
 ### Phase 5: Policy Progression Visualization Across Spaced Checkpoints
 
@@ -132,8 +133,10 @@ Plans:
   4. Remote artifact sync script pulls compressed checkpoints (`.tar.gz`) and `metrics.csv` to local `runs/` with SHA256 integrity validation.
   5. Initial HalfCheetah-v4 pilot run executes on Kaggle GPU, demonstrating remote training and local downstream visualization integration.
 
-**Plans**: 0 plans
+**Plans**: 2 plans
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 6 to break down)
+- [x] 06-01: Remote Compute Foundation, Kaggle Authentication & Kernel Packager
+- [x] 06-02: Dual-Slot Queue Manager, Artifact Sync, Experiment Runner & Documentation
+

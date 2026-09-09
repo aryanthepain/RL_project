@@ -27,12 +27,17 @@
       "number": "5",
       "name": "Policy Progression Visualization Across Spaced Checkpoints",
       "status": "complete"
+    },
+    {
+      "number": "6",
+      "name": "Compute Hierarchy for Multi-Tier Benchmark Experiments",
+      "status": "complete"
     }
   ],
   "next": {
     "command": "/gsd-progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 06 of 6 · 17% · executing"
+    "label": "Advance to next milestone or evaluation defense",
+    "reason": "Phase 06 of 6 · 100% · complete"
   },
-  "updated_at": "2026-09-09T18:32:07.387Z"
+  "updated_at": "2026-09-10T00:15:00.000Z"
 }
