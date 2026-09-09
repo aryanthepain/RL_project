@@ -215,6 +215,31 @@ def run_progression_pipeline(
     return summary
 
 
+class TeeLogger:
+    def __init__(self, filepath: str, original_stream):
+        self.stream = original_stream
+        dir_name = os.path.dirname(filepath)
+        if dir_name:
+            os.makedirs(dir_name, exist_ok=True)
+        self.log_file = open(filepath, "a", encoding="utf-8", buffering=1)
+
+    def write(self, message):
+        self.stream.write(message)
+        self.stream.flush()
+        try:
+            self.log_file.write(message)
+            self.log_file.flush()
+        except Exception:
+            pass
+
+    def flush(self):
+        self.stream.flush()
+        try:
+            self.log_file.flush()
+        except Exception:
+            pass
+
+
 def main():
     parser = argparse.ArgumentParser(description="HalfCheetah Policy Progression Pipeline Runner")
     parser.add_argument("--total-timesteps", type=int, default=10_000, help="Total training steps")
@@ -229,8 +254,19 @@ def main():
     parser.add_argument("--device", type=str, default="cpu", help="Torch compute device")
     parser.add_argument("--timelapse-factor", type=int, default=1, help="Timelapse sampling factor for montage")
     parser.add_argument("--detach", action="store_true", help="Launch in detached background process")
+    parser.add_argument("--log-file", type=str, default="logs/progression_generation.log", help="Path to write log copy")
 
     args = parser.parse_args()
+
+    if args.log_file and not args.detach:
+        # Clear log file initially if starting fresh
+        try:
+            open(args.log_file, "w", encoding="utf-8").close()
+            sys.stdout = TeeLogger(args.log_file, sys.stdout)
+            sys.stderr = TeeLogger(args.log_file, sys.stderr)
+        except Exception as e:
+            print(f"[Warning] Could not initialize TeeLogger: {e}")
+
     if args.detach:
         import subprocess
         os.makedirs("logs", exist_ok=True)
@@ -251,7 +287,7 @@ def main():
         print("Log destination: logs/progression_generation.log")
         return
 
-    kwargs = {k: v for k, v in vars(args).items() if k != "detach"}
+    kwargs = {k: v for k, v in vars(args).items() if k not in ("detach", "log_file")}
     run_progression_pipeline(**kwargs)
 
 
