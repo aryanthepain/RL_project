@@ -9,10 +9,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Theoretical Documentation (DOC)
 
-- [ ] **DOC-01**: Comprehensive paper overview and motivation explaining overestimation bias in deep Q-learning, why clipped double Q-learning (SAC, TD3) can still under- or overestimate, and how distributional quantile critics resolve this.
-- [ ] **DOC-02**: Formal mathematical explanation of the distributional Bellman equation, quantile regression loss (Huber quantile loss), and the quantile mixture distribution across critic ensembles.
-- [ ] **DOC-03**: Detailed analysis of the Truncation operator: sorting pooled quantiles, discarding top $d$ atoms, controlling return estimation bias, and the empirical impact of the truncation parameter $d$.
-- [ ] **DOC-04**: Architectural breakdown, pseudo-code, and hyperparameter catalog matching the paper's exact specification (`bayesgroup/tqc_pytorch`).
+- [x] **DOC-01**: Comprehensive paper overview and motivation explaining overestimation bias in deep Q-learning, why clipped double Q-learning (SAC, TD3) can still under- or overestimate, and how distributional quantile critics resolve this.
+- [x] **DOC-02**: Formal mathematical explanation of the distributional Bellman equation, quantile regression loss (Huber quantile loss), and the quantile mixture distribution across critic ensembles.
+- [x] **DOC-03**: Detailed analysis of the Truncation operator: sorting pooled quantiles, discarding top $d$ atoms, controlling return estimation bias, and the empirical impact of the truncation parameter $d$.
+- [x] **DOC-04**: Architectural breakdown, pseudo-code, and hyperparameter catalog matching the paper's exact specification (`bayesgroup/tqc_pytorch`).
 
 ### Core Algorithm & Quantile Networks (ALGO)
 
@@ -65,10 +65,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DOC-01 | Phase 1 | Pending |
-| DOC-02 | Phase 1 | Pending |
-| DOC-03 | Phase 1 | Pending |
-| DOC-04 | Phase 1 | Pending |
+| DOC-01 | Phase 1 | Complete |
+| DOC-02 | Phase 1 | Complete |
+| DOC-03 | Phase 1 | Complete |
+| DOC-04 | Phase 1 | Complete |
 | ALGO-01 | Phase 2 | Pending |
 | ALGO-02 | Phase 2 | Pending |
 | ALGO-03 | Phase 2 | Pending |
