@@ -4,6 +4,7 @@ import os
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 import gymnasium as gym
+import imageio
 import imageio.v3 as iio
 import matplotlib.pyplot as plt
 import numpy as np
@@ -253,29 +254,34 @@ def stitch_video_files(
 ) -> str:
     """Concatenate multiple video files sequentially into a single master video.
 
-    Streams frames one video at a time to keep memory usage minimal.
+    Streams frames one frame at a time to keep memory usage strictly bounded (O(1) frame in RAM).
     """
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     if not input_paths:
         raise ValueError("No input video paths provided to stitch.")
 
-    all_frames: List[np.ndarray] = []
-    for path in input_paths:
-        if not os.path.isfile(path):
-            continue
-        try:
-            frames = iio.imread(path)
-            # Sample frames if timelapse is requested
-            if timelapse_factor > 1:
-                frames = frames[::timelapse_factor]
-            all_frames.extend(frames)
-        except Exception as e:
-            print(f"Warning: Failed to read video {path}: {e}")
+    writer = imageio.get_writer(output_path, fps=fps)
+    frames_written = 0
+    try:
+        for path in input_paths:
+            if not os.path.isfile(path):
+                continue
+            try:
+                reader = imageio.get_reader(path)
+                for frame_idx, frame in enumerate(reader):
+                    if timelapse_factor <= 1 or (frame_idx % timelapse_factor == 0):
+                        writer.append_data(frame)
+                        frames_written += 1
+                reader.close()
+            except Exception as e:
+                print(f"Warning: Failed to read video {path}: {e}")
+    finally:
+        writer.close()
 
-    if not all_frames:
+    if frames_written == 0:
         raise RuntimeError("No frames loaded from any input videos.")
 
-    return save_video(all_frames, output_path, fps=fps)
+    return output_path
 
 
 def plot_progression_diagnostics(

@@ -62,7 +62,7 @@ $ArgsString = ($ArgsOnly | ForEach-Object { if ($_ -match '\s') { "`"$_`"" } els
 $WorkerScript = Join-Path $PSScriptRoot "worker_progression.ps1"
 
 $Process = Start-Process -FilePath "pwsh.exe" `
-    -ArgumentList "-NoExit", "-File", "`"$WorkerScript`"", "-ArgsString", "`"$ArgsString`"", "-LogFile", "`"$LogFile`"" `
+    -ArgumentList "-NoExit", "-Command", "& '$WorkerScript' -ArgsString '$ArgsString' -LogFile '$LogFile'" `
     -WorkingDirectory $ProjectRoot `
     -PassThru
 
