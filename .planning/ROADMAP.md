@@ -9,7 +9,7 @@ A systematic 4-phase horizontal roadmap taking the project from foundational the
 - [x] **Phase 1: Paper Theoretical & Algorithmic Documentation** - Comprehensive explanation document detailing problem motivation, mathematical formulation, truncation operator, and architectures (Issue #1).
 - [x] **Phase 2: Core Algorithm & Quantile Networks** - Modular PyTorch implementation of actor, critic ensemble ($M=5, N=25$), Huber quantile loss, truncation operator, and automatic entropy tuning.
 - [x] **Phase 3: Environment Harness, Replay Buffer & Training Pipeline** - 1M replay buffer, Gymnasium MuJoCo environment integration, reproducible seeding, and training loop with evaluation logging (Issue #2 foundation).
-- [ ] **Phase 4: Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves** - Benchmarking runs on MuJoCo suite, overestimation bias analysis, and reproduction plotting matching ICML 2020 paper figures (Issue #2 completion).
+- [x] **Phase 4: Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves** - Benchmarking runs on MuJoCo suite, overestimation bias analysis, and reproduction plotting matching ICML 2020 paper figures (Issue #2 completion).
 
 ## Phase Details
 
@@ -67,8 +67,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Execute benchmark training runs and overestimation bias Monte Carlo evaluations
-- [ ] 04-02: Generate replication return curves, bias comparison plots, and comparative results summary
+- [x] 04-01: Execute benchmark training runs and overestimation bias Monte Carlo evaluations
+- [x] 04-02: Generate replication return curves, bias comparison plots, and comparative results summary
 
 ## Progress
 
@@ -80,6 +80,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Paper Theoretical & Algorithmic Documentation | 1/1 | Complete | 2026-09-09 |
 | 2. Core Algorithm & Quantile Networks | 2/2 | Complete | 2026-09-09 |
 | 3. Environment Harness, Replay Buffer & Training Pipeline | 2/2 | Complete | 2026-09-09 |
-| 4. Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves | 0/2 | Not started | - |
+| 4. Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves | 2/2 | Complete | 2026-09-09 |
+
 
 

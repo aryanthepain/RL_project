@@ -36,9 +36,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Results Analysis & Publication Curves (VIZ)
 
-- [ ] **VIZ-01**: Plotting scripts generating smoothed return curves with standard deviation/interquartile confidence intervals across seeds for all MuJoCo benchmarks.
-- [ ] **VIZ-02**: Empirical overestimation bias analysis script comparing estimated Q-values against actual Monte Carlo rollouts.
-- [ ] **VIZ-03**: Summary results table comparing reproduced scores against Table 1 & Table 2 in Kuznetsov et al. (ICML 2020).
+- [x] **VIZ-01**: Plotting scripts generating smoothed return curves with standard deviation/interquartile confidence intervals across seeds for all MuJoCo benchmarks.
+- [x] **VIZ-02**: Empirical overestimation bias analysis script comparing estimated Q-values against actual Monte Carlo rollouts.
+- [x] **VIZ-03**: Summary results table comparing reproduced scores against Table 1 & Table 2 in Kuznetsov et al. (ICML 2020).
 
 ## v2 Requirements
 
@@ -80,9 +80,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXP-01 | Phase 3 | Complete |
 | EXP-02 | Phase 3 | Complete |
 | EXP-03 | Phase 3 | Complete |
-| VIZ-01 | Phase 4 | Pending |
-| VIZ-02 | Phase 4 | Pending |
-| VIZ-03 | Phase 4 | Pending |
+| VIZ-01 | Phase 4 | Complete |
+| VIZ-02 | Phase 4 | Complete |
+| VIZ-03 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 18 total
