@@ -6,6 +6,8 @@ Based on Kuznetsov et al. (ICML 2020):
 
 from .actor import Actor
 from .agent import TQCAgent
+from .benchmark import run_benchmark
+from .bias_analysis import compute_overestimation_bias, save_bias_report
 from .critic import Critic, CriticEnsemble
 from .envs import BENCHMARK_ENVS, get_env_dims, get_env_metadata, make_env
 from .evaluate import evaluate_policy
@@ -23,6 +25,7 @@ __all__ = [
     "MetricsLogger",
     "ReplayBuffer",
     "TQCAgent",
+    "compute_overestimation_bias",
     "create_agent",
     "evaluate_policy",
     "get_device",
@@ -30,6 +33,8 @@ __all__ = [
     "get_env_metadata",
     "make_env",
     "quantile_huber_loss",
+    "run_benchmark",
+    "save_bias_report",
     "seed_everything",
     "train_tqc",
     "truncate_quantiles",
