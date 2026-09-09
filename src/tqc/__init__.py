@@ -18,6 +18,7 @@ from .replay_buffer import ReplayBuffer
 from .train import train_tqc
 from .truncation import quantile_huber_loss, truncate_quantiles
 from .utils import get_device, seed_everything
+from .visualize import play_agent_interactive, record_agent_video
 
 __all__ = [
     "Actor",
@@ -36,9 +37,11 @@ __all__ = [
     "get_env_dims",
     "get_env_metadata",
     "make_env",
+    "play_agent_interactive",
     "plot_bias_comparison",
     "plot_learning_curves",
     "quantile_huber_loss",
+    "record_agent_video",
     "run_benchmark",
     "save_bias_report",
     "seed_everything",
