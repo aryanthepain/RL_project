@@ -5,5 +5,15 @@ Based on Kuznetsov et al. (ICML 2020):
 """
 
 from .actor import Actor
+from .agent import TQCAgent
+from .critic import Critic, CriticEnsemble
+from .truncation import quantile_huber_loss, truncate_quantiles
 
-__all__ = ["Actor"]
+__all__ = [
+    "Actor",
+    "Critic",
+    "CriticEnsemble",
+    "TQCAgent",
+    "quantile_huber_loss",
+    "truncate_quantiles",
+]

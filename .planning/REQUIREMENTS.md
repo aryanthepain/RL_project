@@ -16,11 +16,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Core Algorithm & Quantile Networks (ALGO)
 
-- [ ] **ALGO-01**: Actor network implementing squashed Gaussian policy with reparameterization trick, tanh squashing, and log-probability calculation.
-- [ ] **ALGO-02**: Critic ensemble network implementing $M=5$ independent multi-layer perceptron quantile critics, each predicting $N=25$ quantiles.
-- [ ] **ALGO-03**: Quantile regression loss computation using Huber quantile loss with asymmetric penalty weights.
-- [ ] **ALGO-04**: Truncation operator pooling $M \times N = 125$ quantiles from the target critic ensemble, sorting in ascending order, and dropping the top $d$ quantiles to construct the target distribution.
-- [ ] **ALGO-05**: Soft target network updates with Polyak averaging parameter $\tau = 0.005$ and automatic entropy temperature ($\alpha$) tuning via dual gradient descent.
+- [x] **ALGO-01**: Actor network implementing squashed Gaussian policy with reparameterization trick, tanh squashing, and log-probability calculation.
+- [x] **ALGO-02**: Critic ensemble network implementing $M=5$ independent multi-layer perceptron quantile critics, each predicting $N=25$ quantiles.
+- [x] **ALGO-03**: Quantile regression loss computation using Huber quantile loss with asymmetric penalty weights.
+- [x] **ALGO-04**: Truncation operator pooling $M \times N = 125$ quantiles from the target critic ensemble, sorting in ascending order, and dropping the top $d$ quantiles to construct the target distribution.
+- [x] **ALGO-05**: Soft target network updates with Polyak averaging parameter $\tau = 0.005$ and automatic entropy temperature ($\alpha$) tuning via dual gradient descent.
 
 ### Environment & Buffer Infrastructure (ENV)
 
@@ -69,11 +69,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOC-02 | Phase 1 | Complete |
 | DOC-03 | Phase 1 | Complete |
 | DOC-04 | Phase 1 | Complete |
-| ALGO-01 | Phase 2 | Pending |
-| ALGO-02 | Phase 2 | Pending |
-| ALGO-03 | Phase 2 | Pending |
-| ALGO-04 | Phase 2 | Pending |
-| ALGO-05 | Phase 2 | Pending |
+| ALGO-01 | Phase 2 | Complete |
+| ALGO-02 | Phase 2 | Complete |
+| ALGO-03 | Phase 2 | Complete |
+| ALGO-04 | Phase 2 | Complete |
+| ALGO-05 | Phase 2 | Complete |
 | ENV-01 | Phase 3 | Pending |
 | ENV-02 | Phase 3 | Pending |
 | ENV-03 | Phase 3 | Pending |

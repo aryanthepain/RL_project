@@ -7,7 +7,7 @@ A systematic 4-phase horizontal roadmap taking the project from foundational the
 ## Phases
 
 - [x] **Phase 1: Paper Theoretical & Algorithmic Documentation** - Comprehensive explanation document detailing problem motivation, mathematical formulation, truncation operator, and architectures (Issue #1).
-- [ ] **Phase 2: Core Algorithm & Quantile Networks** - Modular PyTorch implementation of actor, critic ensemble ($M=5, N=25$), Huber quantile loss, truncation operator, and automatic entropy tuning.
+- [x] **Phase 2: Core Algorithm & Quantile Networks** - Modular PyTorch implementation of actor, critic ensemble ($M=5, N=25$), Huber quantile loss, truncation operator, and automatic entropy tuning.
 - [ ] **Phase 3: Environment Harness, Replay Buffer & Training Pipeline** - 1M replay buffer, Gymnasium MuJoCo environment integration, reproducible seeding, and training loop with evaluation logging (Issue #2 foundation).
 - [ ] **Phase 4: Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves** - Benchmarking runs on MuJoCo suite, overestimation bias analysis, and reproduction plotting matching ICML 2020 paper figures (Issue #2 completion).
 
@@ -39,8 +39,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Implement actor, quantile critic ensemble, and truncation loss modules
-- [ ] 02-02: Implement TQC agent update step, Polyak target updates, and auto-alpha tuning with unit tests
+- [x] 02-01: Implement actor, quantile critic ensemble, and truncation loss modules
+- [x] 02-02: Implement TQC agent update step, Polyak target updates, and auto-alpha tuning with unit tests
 
 ### Phase 3: Environment Harness, Replay Buffer & Training Pipeline
 **Goal**: Build the 1M uniform replay buffer, Gymnasium MuJoCo benchmark environment wrappers (HalfCheetah, Hopper, Walker2d, Ant, Humanoid), seed control, and training/evaluation pipeline with metrics logging and SAC baseline support.
@@ -78,6 +78,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Paper Theoretical & Algorithmic Documentation | 1/1 | Complete | 2026-09-09 |
-| 2. Core Algorithm & Quantile Networks | 0/2 | Not started | - |
+| 2. Core Algorithm & Quantile Networks | 2/2 | Complete | 2026-09-09 |
 | 3. Environment Harness, Replay Buffer & Training Pipeline | 0/2 | Not started | - |
 | 4. Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves | 0/2 | Not started | - |
+
