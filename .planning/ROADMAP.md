@@ -97,6 +97,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 2. Core Algorithm & Quantile Networks | 2/2 | Complete | 2026-09-09 |
 | 3. Environment Harness, Replay Buffer & Training Pipeline | 2/2 | Complete | 2026-09-09 |
 | 4. Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves | 2/2 | Complete | 2026-09-09 |
+| 5. Policy Progression Visualization Across Spaced Checkpoints | 2/2 | Complete    | 2026-09-09 |
 
 ### Phase 5: Policy Progression Visualization Across Spaced Checkpoints
 
@@ -104,17 +105,19 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 **Depends on**: Phase 4
 **Requirements**: VIZ-04
 **Success Criteria** (what must be TRUE):
+
   1. Training loop saves step 0 baseline and periodic checkpoints every 100 steps over 10,000 steps.
   2. Frame HUD banner displays checkpoint number, step count, elapsed time, forward speed, return, and Q-mean.
   3. 6-way 2x3 synchronized grid video generated comparing milestones (#1, #20, #40, #60, #80, #100).
   4. Chronological master montage stitches all 100 videos back-to-back.
   5. Background process launcher allows long video generation to execute independently in a separate terminal without blocking future phases.
+
 **Plans**: 2 plans
 
 Plans:
 
-- [ ] 05-01: Core Visualization Engine, Frame Telemetry HUD & Compositing Primitives
-- [ ] 05-02: End-to-End Progression Runner with Detached Background Terminal Support
+- [x] 05-01: Core Visualization Engine, Frame Telemetry HUD & Compositing Primitives
+- [x] 05-02: End-to-End Progression Runner with Detached Background Terminal Support
 
 ### Phase 6: Compute Hierarchy for Multi-Tier Benchmark Experiments
 

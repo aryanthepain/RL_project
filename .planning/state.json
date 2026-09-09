@@ -1,0 +1,38 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": null,
+  "phases": [
+    {
+      "number": "1",
+      "name": "Paper Theoretical & Algorithmic Documentation",
+      "status": "complete"
+    },
+    {
+      "number": "2",
+      "name": "Core Algorithm & Quantile Networks",
+      "status": "complete"
+    },
+    {
+      "number": "3",
+      "name": "Environment Harness, Replay Buffer & Training Pipeline",
+      "status": "complete"
+    },
+    {
+      "number": "4",
+      "name": "Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves",
+      "status": "complete"
+    },
+    {
+      "number": "5",
+      "name": "Policy Progression Visualization Across Spaced Checkpoints",
+      "status": "complete"
+    }
+  ],
+  "next": {
+    "command": "/gsd-progress --next",
+    "label": "Advance to the next step (plan phase 06)",
+    "reason": "Phase 06 of 6 — needs a plan"
+  },
+  "updated_at": "2026-09-09T17:58:00.374Z"
+}
