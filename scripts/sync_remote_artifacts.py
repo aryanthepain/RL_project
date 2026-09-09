@@ -46,8 +46,11 @@ def download_kernel_output(kernel_id: str, download_dir: Union[str, Path]) -> bo
 
     cmd = ["kaggle", "kernels", "output", kernel_id, "-p", str(dest)]
     print(f"[ArtifactSync] Executing: {' '.join(cmd)}")
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        res = subprocess.run(cmd, capture_output=True, text=True, check=True, env=env)
         print(res.stdout)
         return True
     except subprocess.CalledProcessError as e:

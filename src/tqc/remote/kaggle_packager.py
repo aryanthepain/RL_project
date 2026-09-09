@@ -62,6 +62,26 @@ def build_kernel_metadata(
     }
 
 
+def _get_b64_source_payload(source_root: Optional[Union[str, Path]] = None) -> str:
+    """Compress src/ directory to in-memory tar.gz and encode as base64 string."""
+    import base64
+    import io
+    root = Path(source_root).resolve() if source_root else Path.cwd().resolve()
+    src_dir = root / "src"
+    if not src_dir.is_dir():
+        for parent in root.parents:
+            if (parent / "src").is_dir():
+                src_dir = parent / "src"
+                break
+    if not src_dir.is_dir():
+        return ""
+
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+        tar.add(src_dir, arcname="src")
+    return base64.b64encode(buf.getvalue()).decode("ascii")
+
+
 def create_remote_entrypoint(
     env_id: str = "HalfCheetah-v4",
     seed: int = 42,
@@ -74,12 +94,13 @@ def create_remote_entrypoint(
     batch_size: int = 256,
     warmup_steps: int = 10_000,
     eval_episodes: int = 10,
+    source_root: Optional[Union[str, Path]] = None,
 ) -> str:
     """Generate the remote Python script that runs on the Kaggle GPU worker.
 
     The generated script:
     1. Installs gymnasium MuJoCo bindings if missing.
-    2. Unpacks tqc_source.tar.gz into execution directory.
+    2. Unpacks embedded base64 tqc_source into execution directory.
     3. Auto-detects CUDA and enables cudnn benchmark optimizations.
     4. Executes train_tqc with exact paper parameters.
     5. Bundles output checkpoints and metrics into artifacts.tar.gz.
@@ -88,6 +109,7 @@ def create_remote_entrypoint(
     Returns:
         String containing complete Python script.
     """
+    b64_payload = _get_b64_source_payload(source_root)
     return f'''# Auto-generated Kaggle Remote Entrypoint for TQC Benchmark
 import os
 import sys
@@ -109,31 +131,56 @@ except Exception as e:
 
 # 2. Unpack bundled source code
 print("\\n[2/5] Setting up TQC source environment...")
+b64_data = """{b64_payload}"""
+if b64_data:
+    import base64
+    import io
+    tar_bytes = base64.b64decode(b64_data.strip())
+    with tarfile.open(fileobj=io.BytesIO(tar_bytes), mode="r:gz") as tar:
+        if hasattr(tarfile, "data_filter"):
+            tar.extractall(path=".", filter="data")
+        else:
+            tar.extractall(path=".")
+
 archive_path = Path("tqc_source.tar.gz")
 if archive_path.is_file():
     print("Extracting tqc_source.tar.gz...")
     with tarfile.open(archive_path, "r:gz") as tar:
-        tar.extractall(path=".")
+        if hasattr(tarfile, "data_filter"):
+            tar.extractall(path=".", filter="data")
+        else:
+            tar.extractall(path=".")
 
-# Add current working directory to sys.path
+# Add execution directories to sys.path
 cwd = str(Path(".").resolve())
-if cwd not in sys.path:
-    sys.path.insert(0, cwd)
+for p in [cwd, "/kaggle/working", "/kaggle/src"]:
+    if os.path.exists(p) and p not in sys.path:
+        sys.path.insert(0, p)
 
 import torch
 from src.tqc.train import train_tqc
 
-# 3. Hardware verification & CUDA optimizations
+# 3. Hardware verification & CUDA capability check
 print("\\n[3/5] Inspecting hardware accelerators...")
-has_cuda = torch.cuda.is_available()
-print(f"CUDA Available: {{has_cuda}}")
-if has_cuda:
-    print(f"Device Name: {{torch.cuda.get_device_name(0)}}")
-    print(f"Device Count: {{torch.cuda.device_count()}}")
-    torch.backends.cudnn.benchmark = True
+has_cuda = False
+if torch.cuda.is_available():
+    try:
+        cap_major, cap_minor = torch.cuda.get_device_capability(0)
+        gpu_name = torch.cuda.get_device_name(0)
+        print(f"Detected GPU: {{gpu_name}} (Capability {{cap_major}}.{{cap_minor}})")
+        if cap_major >= 7:
+            has_cuda = True
+            torch.backends.cudnn.benchmark = True
+            print("CUDA capability supported. GPU acceleration active.")
+        else:
+            print(f"Notice: GPU capability {{cap_major}}.{{cap_minor}} (<7.0) is not supported by PyTorch 2.6+. Gracefully using CPU.")
+    except Exception as e:
+        print(f"CUDA capability query error: {{e}}. Falling back to CPU.")
+else:
+    print("CUDA not available.")
 
 chosen_device = "cuda" if (has_cuda and "{device}" != "cpu") else "cpu"
-print(f"Using device: {{chosen_device}}")
+print(f"Selected compute device: {{chosen_device}}")
 
 # 4. Launch TQC Training
 print("\\n[4/5] Launching TQC Training Loop...")

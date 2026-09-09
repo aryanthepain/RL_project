@@ -89,6 +89,16 @@ def resolve_kaggle_credentials(
             key = env_vars.get("KAGGLE_KEY", "").strip()
 
     if username and key:
+        os.environ["KAGGLE_USERNAME"] = username
+        os.environ["KAGGLE_KEY"] = key
+        if key.startswith("KGAT_"):
+            os.environ["KAGGLE_API_TOKEN"] = key
+            access_token_file = target_dir / "access_token"
+            if not access_token_file.is_file():
+                try:
+                    access_token_file.write_text(key, encoding="utf-8")
+                except Exception:
+                    pass
         return username, key
 
     # 3. Interactive prompt fallback
@@ -106,12 +116,17 @@ def resolve_kaggle_credentials(
             try:
                 with open(kaggle_json, "w", encoding="utf-8") as f:
                     json.dump(credential_data, f, indent=2)
+                if prompt_key.startswith("KGAT_"):
+                    (target_dir / "access_token").write_text(prompt_key, encoding="utf-8")
+                    os.environ["KAGGLE_API_TOKEN"] = prompt_key
                 # Set permissions to owner-only on POSIX platforms
                 if os.name != "nt":
                     os.chmod(kaggle_json, 0o600)
             except OSError as e:
                 raise KaggleAuthError(f"Failed to write credentials to {kaggle_json}: {e}")
 
+            os.environ["KAGGLE_USERNAME"] = prompt_user
+            os.environ["KAGGLE_KEY"] = prompt_key
             return prompt_user, prompt_key
 
     raise KaggleAuthError(

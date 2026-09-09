@@ -28,3 +28,7 @@ runs/
 logs/
 videos/
 *.pt
+.env
+kaggle.json
+.build_kernel/
+kaggle_downloads/

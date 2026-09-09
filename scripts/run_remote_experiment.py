@@ -145,7 +145,7 @@ def run_experiment(
     print("\n[Step 4/6] Generating Remote Kernel Code & Metadata...")
     clean_env = env_id.lower().replace("-", "").replace("_", "")
     kernel_slug = f"tqc-{clean_env}-s{seed}-{datetime.now().strftime('%m%d%H%M')}"
-    kernel_title = f"TQC {env_id} Seed {seed} Benchmark"
+    kernel_title = kernel_slug
 
     metadata = build_kernel_metadata(
         username=username,
