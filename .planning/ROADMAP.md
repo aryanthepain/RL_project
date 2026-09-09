@@ -121,10 +121,18 @@ Plans:
 
 ### Phase 6: Compute Hierarchy for Multi-Tier Benchmark Experiments
 
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 5
-**Plans:** 0 plans
+**Goal**: Establish a prioritized compute and experiment orchestration framework (Tier-1 Kaggle GPU > Tier-2 Colab > Tier-3 Local GPU > Tier-4 Local CPU) and pilot remote cloud training on HalfCheetah-v4 (1M steps) with automated artifact synchronization back to local runs.
+**Depends on**: Phase 5
+**Requirements**: Issue #4, Issue #7
+**Success Criteria** (what must be TRUE):
+
+  1. Dual credential detection supports `~/.kaggle/kaggle.json` and `.env` with automated validation and interactive prompts.
+  2. Automated Kaggle runner packages kernel metadata, performs a 100-step pre-flight smoke test, and dispatches remote GPU training.
+  3. Dual-slot queue manager tracks and schedules concurrent remote runs respecting platform limits.
+  4. Remote artifact sync script pulls compressed checkpoints (`.tar.gz`) and `metrics.csv` to local `runs/` with SHA256 integrity validation.
+  5. Initial HalfCheetah-v4 pilot run executes on Kaggle GPU, demonstrating remote training and local downstream visualization integration.
+
+**Plans**: 0 plans
 
 Plans:
 
