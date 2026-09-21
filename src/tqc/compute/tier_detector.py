@@ -124,6 +124,26 @@ class TierDetector:
                 reason=f"Colab probe error: {exc}",
             )
 
+    def _detect_physical_nvidia_gpu(self) -> Optional[str]:
+        """Check if physical NVIDIA GPU hardware exists via nvidia-smi."""
+        import shutil
+        import subprocess
+
+        if not shutil.which("nvidia-smi"):
+            return None
+        try:
+            res = subprocess.run(
+                ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
+                capture_output=True,
+                text=True,
+                timeout=3,
+            )
+            if res.returncode == 0 and res.stdout.strip():
+                return res.stdout.strip().splitlines()[0]
+        except Exception:
+            pass
+        return None
+
     def probe_local_gpu(self) -> TierCapability:
         """Probe local CUDA GPU capability via PyTorch."""
         try:
@@ -144,6 +164,17 @@ class TierDetector:
                         "cuda_version": cuda_ver,
                     },
                 )
+
+            physical_gpu = self._detect_physical_nvidia_gpu()
+            if physical_gpu:
+                return TierCapability(
+                    tier=ComputeTier.LOCAL_GPU,
+                    available=False,
+                    name="Local CUDA GPU",
+                    details={"physical_hardware": physical_gpu, "pytorch_version": torch.__version__},
+                    reason=f"GPU detected ({physical_gpu}), but PyTorch is CPU-only ({torch.__version__})",
+                )
+
             return TierCapability(
                 tier=ComputeTier.LOCAL_GPU,
                 available=False,
@@ -267,7 +298,10 @@ class TierDetector:
                 else:
                     info = str(cap.details)
             else:
-                info = cap.reason or "Not available"
+                if tier == ComputeTier.LOCAL_GPU and cap.details.get("physical_hardware"):
+                    info = f"{cap.details.get('physical_hardware')} (CPU-only Torch)"
+                else:
+                    info = cap.reason or "Not available"
 
             # Truncate if excessively long
             if len(info) > 30:

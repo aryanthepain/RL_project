@@ -76,12 +76,24 @@ class TestTierDetector(unittest.TestCase):
 
     @patch("torch.cuda.is_available")
     def test_probe_local_gpu_unavailable(self, mock_cuda: MagicMock) -> None:
-        """Test probe_local_gpu when CUDA is unavailable."""
+        """Test probe_local_gpu when CUDA is unavailable and no physical GPU found."""
         mock_cuda.return_value = False
-        cap = self.detector.probe_local_gpu()
-        self.assertEqual(cap.tier, ComputeTier.LOCAL_GPU)
-        self.assertFalse(cap.available)
-        self.assertIn("No CUDA-capable GPU", cap.reason)
+        with patch.object(self.detector, "_detect_physical_nvidia_gpu", return_value=None):
+            cap = self.detector.probe_local_gpu()
+            self.assertEqual(cap.tier, ComputeTier.LOCAL_GPU)
+            self.assertFalse(cap.available)
+            self.assertIn("No CUDA-capable GPU", cap.reason)
+
+    @patch("torch.cuda.is_available")
+    def test_probe_local_gpu_hardware_detected_but_cpu_torch(self, mock_cuda: MagicMock) -> None:
+        """Test probe_local_gpu when physical GPU exists but PyTorch is CPU-only."""
+        mock_cuda.return_value = False
+        with patch.object(self.detector, "_detect_physical_nvidia_gpu", return_value="NVIDIA RTX 3050"):
+            cap = self.detector.probe_local_gpu()
+            self.assertEqual(cap.tier, ComputeTier.LOCAL_GPU)
+            self.assertFalse(cap.available)
+            self.assertIn("GPU detected (NVIDIA RTX 3050)", cap.reason)
+            self.assertIn("CPU-only", cap.reason)
 
     def test_probe_local_cpu(self) -> None:
         """Test probe_local_cpu is always available as fallback."""
