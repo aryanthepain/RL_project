@@ -41,13 +41,13 @@
     {
       "number": "8",
       "name": "Multi-Tier Compute Hierarchy and Google Colab Integration",
-      "status": "pending"
+      "status": "complete"
     }
   ],
   "next": {
-    "command": "/gsd-progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 07 of 8 · 25% · executing"
+    "command": "/gsd-new-milestone",
+    "label": "Start a new milestone",
+    "reason": "All phases complete — start a new milestone"
   },
-  "updated_at": "2026-09-21T10:39:13.848Z"
+  "updated_at": "2026-09-21T14:24:30.972Z"
 }

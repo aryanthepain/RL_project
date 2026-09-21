@@ -207,3 +207,100 @@ Generates:
 - `videos/halfcheetah_6way_grid.mp4`: Synchronized 2x3 policy progression grid.
 - `videos/halfcheetah_progression_montage.mp4`: Chronological gait evolution montage.
 - `results/halfcheetah_progression_diagnostics.png`: Multi-panel progression analytics.
+
+---
+
+## 8. Tier-2: Google Colab GPU Workflow (D-01, D-02, D-03, D-04, D-12, D-13, D-14)
+
+For interactive experimentation, rapid iteration, and users without Kaggle credentials or local NVIDIA GPUs, the project provides a self-contained Google Colab notebook:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aryanthepain/RL_project/blob/main/notebooks/colab_tqc_benchmark.ipynb)
+
+**Notebook Location:** `notebooks/colab_tqc_benchmark.ipynb`
+
+### 8.1 Key Architecture & Resilience Features
+1. **Headless EGL GPU Rendering (D-12)**:
+   - Sets `export MUJOCO_GL=egl` before loading Gymnasium or MuJoCo.
+   - Prevents headless X11/GLFW display context crashes on Colab GPU runtimes.
+2. **Crash-Resilient Google Drive Persistence (D-02, D-03)**:
+   - Auto-mounts Google Drive at `/content/drive` and writes runs to `/content/drive/MyDrive/tqc_runs/`.
+   - `safe_save()` catches `(FileNotFoundError, OSError)` and auto-recreates directories defensively before saving, ensuring that accidental user deletion of the Drive folder mid-training does not crash the active run.
+   - For non-Drive sessions, falls back to `/content/runs/` with a one-click `.tar.gz` browser download cell.
+3. **Seamless Checkpoint Auto-Resumption (D-11)**:
+   - Automatically detects existing `checkpoint_*.pt` or `latest.pt` files in the run directory.
+   - Resumes training from the exact saved step count rather than resetting to step 0, surviving Colab disconnections.
+4. **In-Notebook Video Playback with Inactivity Truncation (D-13)**:
+   - Automatically renders post-training evaluation videos using `src/tqc/visualize.py`.
+   - Employs Phase 7 adaptive velocity thresholding (`--truncate-inactive`) to skip stationary or fallen episodes.
+   - Embeds HTML5 video directly into the notebook cell via `IPython.display.Video`.
+5. **Disk Quota Management & Pruning (D-04)**:
+   - Built-in cell invoking `scripts/clean_runs.py` to inspect disk usage and prune intermediate checkpoints while strictly preserving `best_model.pt`, `latest.pt`, `final_model.pt`, and `metrics.csv`.
+
+---
+
+## 9. Unified Multi-Tier Dispatcher CLI (D-06, D-07, D-08, D-09, D-10)
+
+The unified CLI runner `scripts/run_experiments.py` automatically probes local and remote hardware capabilities, establishes the compute hierarchy, and dispatches benchmark workloads:
+
+```
+Priority Resolution Order:
+  Tier 1: Kaggle Remote GPU (2x T4 / P100)
+    ↓ (fallback if credentials missing)
+  Tier 2: Google Colab GPU (Interactive cloud execution)
+    ↓ (fallback if not in Colab)
+  Tier 3: Local CUDA GPU (Local hardware acceleration)
+    ↓ (fallback if no CUDA device)
+  Tier 4: Local CPU Fallback (Multi-threaded CPU execution)
+```
+
+### 9.1 Hardware Capability Inspection
+To probe your hardware and display the formatted ASCII status table:
+```powershell
+python scripts/run_experiments.py --list-tiers
+```
+
+Example Output:
+```
+==============================================================================
+                TQC COMPUTE HIERARCHY DETECTION REPORT                
+==============================================================================
+Tier     | Name                 | Status        | Details / Fallback Reason     
+------------------------------------------------------------------------------
+T1 (kaggle) | Kaggle Remote GPU    | [READY]       | aryanguptaji (2x T4 / P100 ...
+T2 (colab) | Google Colab GPU     | [UNAVAILABLE] | Not running inside Google C...
+T3 (gpu) | Local CUDA GPU       | [UNAVAILABLE] | No CUDA-capable GPU detecte...
+T4 (cpu) | Local CPU Fallback   | [SKIPPED]     | 16 Cores / 8 Threads (Windows)
+------------------------------------------------------------------------------
+SELECTED COMPUTE TIER: KAGGLE (Priority Resolution)
+==============================================================================
+```
+
+### 9.2 Running Workloads Across Presets
+Supports 3 standardized workload presets:
+- `smoke`: 100 steps (quick validation)
+- `quick`: 10,000 steps (functional verification)
+- `full`: 1,000,000 steps (3,000,000 steps for `Humanoid-v4`)
+
+```powershell
+# Dry-run preview
+python scripts/run_experiments.py --env HalfCheetah-v4 --preset smoke --dry-run
+
+# Run quick test on CPU
+python scripts/run_experiments.py --env Hopper-v4 --preset quick --tier cpu --yes
+
+# Auto-resolve highest tier and train
+python scripts/run_experiments.py --env Walker2d-v4 --preset full
+```
+
+### 9.3 Disk Quota Pruning with `clean_runs.py`
+```powershell
+# Inspect storage across all runs
+python scripts/clean_runs.py --dir runs --inspect
+
+# Preview intermediate checkpoints to prune
+python scripts/clean_runs.py --dir runs --prune --dry-run
+
+# Execute pruning (preserves best_model.pt, latest.pt, final_model.pt, metrics.csv, videos)
+python scripts/clean_runs.py --dir runs --prune --yes
+```
+
