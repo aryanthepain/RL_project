@@ -29,6 +29,7 @@ Technology stack not yet documented. Will populate after codebase mapping or fir
 
 - **Issue & PR Linkage**: Every PR must query open issues via `gh issue list --state open` and link relevant issues using `Closes #<issue>` / `Fixes #<issue>` in the title and description.
 - **Issue Closure**: Verify all corresponding issues are closed upon merge. If an issue was not closed automatically, immediately comment and close it with a comprehensive completion summary referencing the merged PR and commit SHA.
+- **Phase & Feature Branching**: Never commit phase or feature work directly to the default branch (`main`). At the start of every new phase, create a dedicated feature/phase branch (following `gsd/phase-<N>-<slug>` or prompt the user) so that all work is cleanly isolated until PR merge.
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
