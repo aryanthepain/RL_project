@@ -1,4 +1,5 @@
 import argparse
+import collections
 import glob
 import os
 import time
@@ -16,6 +17,131 @@ from .logger import create_agent
 from .utils import get_device, seed_everything
 
 
+def extract_forward_velocity(info: dict, env: Any) -> float:
+    """Extract forward speed magnitude across diverse MuJoCo environments."""
+    if not isinstance(info, dict):
+        info = {}
+    if "x_velocity" in info:
+        vx = float(info["x_velocity"])
+        vy = float(info.get("y_velocity", 0.0))
+        return float(np.sqrt(vx**2 + vy**2)) if vy != 0.0 else vx
+    if "forward_velocity" in info:
+        return float(info["forward_velocity"])
+    try:
+        # Direct MuJoCo C physics accessor if available
+        unwrapped = getattr(env, "unwrapped", env)
+        if hasattr(unwrapped, "data") and hasattr(unwrapped.data, "qvel"):
+            return float(unwrapped.data.qvel[0])
+    except Exception:
+        pass
+    return 0.0
+
+
+def extract_forward_position(info: dict, env: Any) -> Optional[float]:
+    """Extract forward position coordinate across diverse MuJoCo environments."""
+    if not isinstance(info, dict):
+        info = {}
+    if "x_position" in info:
+        return float(info["x_position"])
+    try:
+        unwrapped = getattr(env, "unwrapped", env)
+        if hasattr(unwrapped, "data") and hasattr(unwrapped.data, "qpos"):
+            return float(unwrapped.data.qpos[0])
+    except Exception:
+        pass
+    return None
+
+
+class RolloutInactivityDetector:
+    """Adaptive dual-metric detector for agent inactivity and stagnation during rollouts."""
+
+    def __init__(
+        self,
+        speed_threshold: float = 0.05,
+        stagnation_delta: float = 0.01,
+        patience: int = 30,
+        padding_frames: int = 15,
+        warmup_steps: int = 60,
+        window_size: int = 30,
+    ):
+        self.speed_threshold = float(speed_threshold)
+        self.stagnation_delta = float(stagnation_delta)
+        self.patience = int(patience)
+        self.padding_frames = int(padding_frames)
+        self.warmup_steps = int(warmup_steps)
+        self.window_size = int(window_size)
+
+        self.inactive_counter: int = 0
+        self.velocity_window = collections.deque(maxlen=self.window_size)
+        self.position_window = collections.deque(maxlen=self.window_size)
+
+        self.is_truncated: bool = False
+        self.completion_reason: str = "max_steps"
+        self.remaining_padding: int = self.padding_frames
+        self.trigger_step: Optional[int] = None
+
+    def step(self, step_idx: int, velocity: float, position: Optional[float] = None) -> bool:
+        """Process a rollout step and return whether frame recording should continue.
+
+        Args:
+            step_idx: 0-indexed current environment step.
+            velocity: Forward velocity magnitude.
+            position: Optional forward position coordinate.
+
+        Returns:
+            True if recording should continue for subsequent frames,
+            False if recording has completed (padding exhausted).
+        """
+        if self.is_truncated:
+            if self.remaining_padding > 1:
+                self.remaining_padding -= 1
+                return True
+            self.remaining_padding = 0
+            return False
+
+        if step_idx < self.warmup_steps:
+            self.velocity_window.append(velocity)
+            if position is not None:
+                self.position_window.append(position)
+            return True
+
+        self.velocity_window.append(velocity)
+        if position is not None:
+            self.position_window.append(position)
+
+        # 1. Absolute forward speed threshold check
+        if abs(velocity) < self.speed_threshold:
+            self.inactive_counter += 1
+        else:
+            self.inactive_counter = 0
+
+        if self.inactive_counter >= self.patience:
+            self.is_truncated = True
+            self.completion_reason = "inactivity_truncated"
+            self.trigger_step = step_idx
+            return self.remaining_padding > 0
+
+        # 2. Rolling window stagnation check (in-place thrashing / wall oscillation)
+        if len(self.velocity_window) == self.window_size:
+            v_std = float(np.std(self.velocity_window))
+            if len(self.position_window) == self.window_size:
+                net_disp = abs(self.position_window[-1] - self.position_window[0])
+            else:
+                net_disp = abs(velocity) * self.window_size
+
+            if net_disp < 0.10 and v_std < self.stagnation_delta:
+                self.is_truncated = True
+                self.completion_reason = "stagnation_truncated"
+                self.trigger_step = step_idx
+                return self.remaining_padding > 0
+
+        return True
+
+    def update(self, step_idx: int, velocity: float, position: Optional[float] = None) -> bool:
+        """Alias for step()."""
+        return self.step(step_idx, velocity, position)
+
+
 def draw_telemetry_hud(
     frame_rgb: np.ndarray,
     ckpt_idx: int = 1,
@@ -27,6 +153,8 @@ def draw_telemetry_hud(
     ep_return: float = 0.0,
     q_mean: float = 0.0,
     banner_height: int = 54,
+    status_text: Optional[str] = None,
+    final_return: Optional[float] = None,
 ) -> np.ndarray:
     """Render a semi-transparent HUD banner with telemetry and iteration metrics onto an RGB frame."""
     img = Image.fromarray(frame_rgb)
@@ -45,15 +173,31 @@ def draw_telemetry_hud(
         f"Iteration: Checkpoint #{ckpt_idx}/{total_ckpts} | "
         f"Training Step: {step:,}/{total_steps:,} ({pct:.1f}%)"
     )
+    if final_return is not None:
+        ret_str = f"Final Ret: {final_return:+.1f}"
+    else:
+        ret_str = f"Return: {ep_return:.1f}"
+
     text_l2 = (
         f"Time: {t_sec:.1f}s | "
         f"Speed: {v_x:+.2f} m/s | "
-        f"Return: {ep_return:.1f} | "
+        f"{ret_str} | "
         f"Q-mean: {q_mean:.1f}"
     )
 
     draw.text((12, 6), text_l1, fill=(255, 255, 255, 255), font=font)
     draw.text((12, 28), text_l2, fill=(56, 189, 248, 255), font=font)
+
+    if status_text:
+        bbox = font.getbbox(status_text)
+        w = bbox[2] - bbox[0]
+        h = bbox[3] - bbox[1]
+        pill_x1 = img.width - 12
+        pill_x0 = pill_x1 - (w + 16)
+        pill_y0 = 6
+        pill_y1 = pill_y0 + h + 8
+        draw.rounded_rectangle([pill_x0, pill_y0, pill_x1, pill_y1], radius=4, fill=(217, 119, 6, 255))
+        draw.text((pill_x0 + 8, pill_y0 + 4), status_text, fill=(255, 255, 255, 255), font=font)
 
     composite = Image.alpha_composite(img.convert("RGBA"), overlay)
     return np.array(composite.convert("RGB"))
@@ -61,7 +205,7 @@ def draw_telemetry_hud(
 
 def rollout_checkpoint_with_telemetry(
     agent: TQCAgent,
-    env_id: str = "HalfCheetah-v4",
+    env_id: Union[str, gym.Env] = "HalfCheetah-v4",
     max_steps: int = 500,
     seed: int = 42,
     ckpt_idx: int = 1,
@@ -71,12 +215,18 @@ def rollout_checkpoint_with_telemetry(
     overlay: bool = True,
     fps: int = 30,
     render: bool = True,
+    truncate_inactive: bool = True,
+    speed_threshold: float = 0.05,
+    stagnation_delta: float = 0.01,
+    patience: int = 30,
+    padding_frames: int = 15,
+    warmup_steps: int = 60,
 ) -> Dict[str, Any]:
     """Execute evaluation rollout of an agent checkpoint while capturing per-frame telemetry.
 
     Args:
         agent: Trained or initialized TQCAgent.
-        env_id: Gymnasium environment name.
+        env_id: Gymnasium environment name or instantiated environment.
         max_steps: Rollout frames / steps (default 500, ~16.6s at 30 fps).
         seed: Fixed evaluation seed for fair across-checkpoint comparisons.
         ckpt_idx: Checkpoint index (1-based).
@@ -86,13 +236,38 @@ def rollout_checkpoint_with_telemetry(
         overlay: Whether to draw HUD overlay on frames.
         fps: Video playback frames per second.
         render: Whether to render RGB frames (set to False for fast metric-only rollout).
+        truncate_inactive: Whether to halt video frame capture when agent is inactive/stagnant.
+        speed_threshold: Speed magnitude below which agent is stationary (m/s).
+        stagnation_delta: Speed standard deviation threshold for in-place stagnation.
+        patience: Number of consecutive inactive steps required to trigger truncation.
+        padding_frames: Number of trailing frames recorded after truncation trigger.
+        warmup_steps: Number of initial steps during which truncation is suppressed.
 
     Returns:
-        Dictionary containing frames, velocities, rewards, returns, actions, q_means.
+        Dictionary containing frames, velocities, rewards, returns, actions, q_means,
+        and truncation metadata (truncated_at_step, total_sim_steps, is_truncated, completion_reason).
     """
-    render_mode = "rgb_array" if render else None
-    env = gym.make(env_id, render_mode=render_mode)
+    created_env = False
+    if isinstance(env_id, str):
+        render_mode = "rgb_array" if render else None
+        env = gym.make(env_id, render_mode=render_mode)
+        created_env = True
+    else:
+        env = env_id
+
     state, _ = env.reset(seed=seed)
+
+    detector = (
+        RolloutInactivityDetector(
+            speed_threshold=speed_threshold,
+            stagnation_delta=stagnation_delta,
+            patience=patience,
+            padding_frames=padding_frames,
+            warmup_steps=warmup_steps,
+        )
+        if truncate_inactive
+        else None
+    )
 
     frames: List[np.ndarray] = []
     velocities: List[float] = []
@@ -100,9 +275,11 @@ def rollout_checkpoint_with_telemetry(
     actions: List[np.ndarray] = []
     q_means: List[float] = []
     total_reward = 0.0
+    recording_active = bool(render)
 
     for step in range(max_steps):
-        raw_frame = env.render() if render else None
+        # D-04: env.render() is skipped once truncation & trailing padding finish
+        raw_frame = env.render() if (render and recording_active) else None
         action = agent.select_action(state, deterministic=True)
 
         # Compute critic Q-mean estimate for current (state, action)
@@ -118,12 +295,17 @@ def rollout_checkpoint_with_telemetry(
                 q_val = 0.0
 
         next_state, reward, terminated, truncated, info = env.step(action)
-        v_x = float(info.get("x_velocity", 0.0))
+        v_x = extract_forward_velocity(info, env)
+        pos_x = extract_forward_position(info, env)
         total_reward += float(reward)
+
+        if truncate_inactive and detector is not None:
+            recording_active = detector.step(step, v_x, pos_x)
 
         t_sec = step / float(fps)
         if raw_frame is not None:
             if overlay:
+                status_text = "[TRUNCATED]" if (detector is not None and detector.is_truncated) else None
                 frame_to_store = draw_telemetry_hud(
                     frame_rgb=raw_frame,
                     ckpt_idx=ckpt_idx,
@@ -134,6 +316,7 @@ def rollout_checkpoint_with_telemetry(
                     v_x=v_x,
                     ep_return=total_reward,
                     q_mean=q_val,
+                    status_text=status_text,
                 )
             else:
                 frame_to_store = raw_frame
@@ -146,9 +329,20 @@ def rollout_checkpoint_with_telemetry(
         state = next_state
 
         if terminated or truncated:
+            if detector is not None and not detector.is_truncated:
+                detector.completion_reason = "env_terminated"
             break
 
-    env.close()
+    if created_env:
+        env.close()
+
+    is_trunc = detector.is_truncated if detector is not None else False
+    comp_reason = (
+        detector.completion_reason
+        if detector is not None
+        else ("env_terminated" if (terminated or truncated) else "max_steps")
+    )
+    trig_step = detector.trigger_step if (detector is not None and detector.is_truncated) else None
 
     return {
         "frames": frames,
@@ -160,6 +354,10 @@ def rollout_checkpoint_with_telemetry(
         "total_return": total_reward,
         "ckpt_idx": ckpt_idx,
         "step_num": step_num,
+        "truncated_at_step": trig_step,
+        "total_sim_steps": len(rewards),
+        "is_truncated": is_trunc,
+        "completion_reason": comp_reason,
     }
 
 
