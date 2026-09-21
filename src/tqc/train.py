@@ -1,16 +1,67 @@
 import argparse
 import os
+import re
 import time
-from typing import Optional, Union
+from typing import List, Optional, Tuple, Union
+
 import gymnasium as gym
 import numpy as np
 import torch
+
 from .agent import TQCAgent
 from .envs import get_env_dims, get_env_metadata, make_env
 from .evaluate import evaluate_policy
 from .logger import MetricsLogger, create_agent
 from .replay_buffer import ReplayBuffer
 from .utils import get_device, seed_everything
+
+
+def safe_save(agent: TQCAgent, path: str, step: Optional[int] = None) -> None:
+    """Save agent checkpoint defensively, auto-recreating directories if deleted."""
+    dir_path = os.path.dirname(path)
+    if dir_path:
+        os.makedirs(dir_path, exist_ok=True)
+    try:
+        agent.save(path)
+    except (FileNotFoundError, OSError):
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
+        agent.save(path)
+
+    if step is not None:
+        try:
+            ckpt = torch.load(path, map_location="cpu")
+            ckpt["step"] = step
+            torch.save(ckpt, path)
+        except Exception:
+            pass
+
+
+def find_latest_checkpoint(exp_dir: str) -> Optional[Tuple[str, int]]:
+    """Scan exp_dir for the latest checkpoint and return (path, step)."""
+    if not os.path.isdir(exp_dir):
+        return None
+
+    candidates: List[Tuple[str, int]] = []
+    for fname in os.listdir(exp_dir):
+        m = re.match(r"^checkpoint_(\d+)\.pt$", fname)
+        if m:
+            candidates.append((os.path.join(exp_dir, fname), int(m.group(1))))
+
+    if candidates:
+        candidates.sort(key=lambda x: x[1], reverse=True)
+        return candidates[0]
+
+    latest_path = os.path.join(exp_dir, "latest.pt")
+    if os.path.isfile(latest_path):
+        try:
+            ckpt = torch.load(latest_path, map_location="cpu")
+            step = ckpt.get("step", 0)
+            return latest_path, int(step)
+        except Exception:
+            return latest_path, 0
+
+    return None
 
 
 def train_tqc(
@@ -28,6 +79,8 @@ def train_tqc(
     log_dir: str = "runs",
     exp_name: Optional[str] = None,
     checkpoint_freq: int = 50_000,
+    resume: bool = False,
+    resume_checkpoint: Optional[str] = None,
 ) -> TQCAgent:
     """Execute complete TQC training loop following Kuznetsov et al. (ICML 2020).
 
@@ -46,6 +99,8 @@ def train_tqc(
         log_dir: Base directory for metrics and checkpoints.
         exp_name: Optional explicit experiment name.
         checkpoint_freq: Step interval for saving checkpoints.
+        resume: Auto-resume from existing checkpoint if available.
+        resume_checkpoint: Optional explicit path to checkpoint file.
 
     Returns:
         Trained TQCAgent instance.
@@ -58,6 +113,21 @@ def train_tqc(
     eval_env = make_env(env_id, seed=seed + 1000)
 
     state_dim, action_dim = get_env_dims(train_env)
+
+    # Resolve experiment directory and resumption
+    if resume and exp_name is None and resume_checkpoint is None and os.path.isdir(log_dir):
+        # Look for existing run matching algo, env_id, seed
+        pattern = f"{algo}_{env_id}_seed{seed}_"
+        matches = [
+            d for d in os.listdir(log_dir)
+            if d.startswith(pattern) and os.path.isdir(os.path.join(log_dir, d))
+        ]
+        if matches:
+            matches.sort(
+                key=lambda d: os.path.getmtime(os.path.join(log_dir, d)),
+                reverse=True,
+            )
+            exp_name = matches[0]
 
     if exp_name is None:
         exp_name = f"{algo}_{env_id}_seed{seed}_{int(time.time())}"
@@ -80,6 +150,33 @@ def train_tqc(
         device=dev,
     )
 
+    # Handle checkpoint resumption
+    start_step = 0
+    target_ckpt: Optional[str] = None
+
+    if resume_checkpoint is not None and os.path.isfile(resume_checkpoint):
+        target_ckpt = resume_checkpoint
+    elif resume:
+        latest = find_latest_checkpoint(logger.exp_dir)
+        if latest is not None:
+            target_ckpt, _ = latest
+
+    if target_ckpt is not None:
+        print(f"Loading checkpoint for resumption: {target_ckpt}")
+        agent.load(target_ckpt)
+
+        # Attempt to recover step
+        match = re.search(r"checkpoint_(\d+)\.pt", target_ckpt)
+        if match:
+            start_step = int(match.group(1))
+        else:
+            try:
+                ckpt_data = torch.load(target_ckpt, map_location="cpu")
+                start_step = int(ckpt_data.get("step", 0))
+            except Exception:
+                start_step = 0
+        print(f"Resuming training from step {start_step} ({target_ckpt})")
+
     state, _ = train_env.reset(seed=seed)
     episode_reward = 0.0
     episode_timesteps = 0
@@ -92,12 +189,13 @@ def train_tqc(
         f"State: {state_dim}, Action: {action_dim}, Drop Top: {agent.drop_top}, Device: {dev}"
     )
 
-    # Save initial untrained baseline checkpoint
-    if checkpoint_freq > 0:
-        agent.save(os.path.join(logger.exp_dir, "checkpoint_0.pt"))
+    # Save initial untrained baseline checkpoint if not resuming
+    if checkpoint_freq > 0 and start_step == 0:
+        safe_save(agent, os.path.join(logger.exp_dir, "checkpoint_0.pt"), step=0)
+        safe_save(agent, os.path.join(logger.exp_dir, "latest.pt"), step=0)
 
     try:
-        for step in range(1, total_timesteps + 1):
+        for step in range(start_step + 1, total_timesteps + 1):
             # Action selection
             if step <= warmup_steps:
                 action = train_env.action_space.sample()
@@ -115,8 +213,8 @@ def train_tqc(
 
             state = next_state
 
-            # Gradient update step once warmup is finished
-            if step >= warmup_steps:
+            # Gradient update step once warmup is finished and buffer has enough samples
+            if step >= warmup_steps and len(replay_buffer) >= batch_size:
                 latest_train_metrics = agent.update(replay_buffer, batch_size=batch_size)
 
             # Handle episode termination
@@ -143,16 +241,18 @@ def train_tqc(
                 if eval_mean > best_eval_return:
                     best_eval_return = eval_mean
                     best_model_path = os.path.join(logger.exp_dir, "best_model.pt")
-                    agent.save(best_model_path)
+                    safe_save(agent, best_model_path, step=step)
 
             # Periodic checkpoint
             if checkpoint_freq > 0 and step % checkpoint_freq == 0:
                 ckpt_path = os.path.join(logger.exp_dir, f"checkpoint_{step}.pt")
-                agent.save(ckpt_path)
+                safe_save(agent, ckpt_path, step=step)
+                safe_save(agent, os.path.join(logger.exp_dir, "latest.pt"), step=step)
 
         # Save final model
         final_model_path = os.path.join(logger.exp_dir, "final_model.pt")
-        agent.save(final_model_path)
+        safe_save(agent, final_model_path, step=total_timesteps)
+        safe_save(agent, os.path.join(logger.exp_dir, "latest.pt"), step=total_timesteps)
     finally:
         logger.close()
         train_env.close()
@@ -177,6 +277,8 @@ def main():
     parser.add_argument("--log-dir", type=str, default="runs", help="Logging root directory")
     parser.add_argument("--exp-name", type=str, default=None, help="Experiment name")
     parser.add_argument("--checkpoint-freq", type=int, default=50_000, help="Checkpoint frequency")
+    parser.add_argument("--resume", action="store_true", help="Auto-resume from existing checkpoint")
+    parser.add_argument("--resume-checkpoint", type=str, default=None, help="Explicit checkpoint path to resume from")
 
     args = parser.parse_args()
     train_tqc(**vars(args))
