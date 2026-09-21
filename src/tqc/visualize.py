@@ -10,11 +10,23 @@ import imageio.v3 as iio
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+import sys
 import torch
-from .agent import TQCAgent
-from .envs import get_env_dims, make_env
-from .logger import create_agent
-from .utils import get_device, seed_everything
+
+_repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
+
+try:
+    from .agent import TQCAgent
+    from .envs import get_env_dims, make_env
+    from .logger import create_agent
+    from .utils import get_device, seed_everything
+except (ImportError, ValueError):
+    from src.tqc.agent import TQCAgent
+    from src.tqc.envs import get_env_dims, make_env
+    from src.tqc.logger import create_agent
+    from src.tqc.utils import get_device, seed_everything
 
 
 def extract_forward_velocity(info: dict, env: Any) -> float:
@@ -361,14 +373,34 @@ def rollout_checkpoint_with_telemetry(
     }
 
 
+def dim_environment_scene(
+    frame: np.ndarray,
+    banner_height: int = 40,
+    dim_factor: float = 0.5,
+) -> np.ndarray:
+    """Dim the 3D environment scene below the HUD banner by dim_factor (default 50%).
+
+    Preserves the top banner at 100% full brightness and contrast.
+    """
+    out = np.copy(frame)
+    if banner_height < out.shape[0]:
+        scene = out[banner_height:, :, :].astype(np.float32) * dim_factor
+        out[banner_height:, :, :] = np.clip(scene, 0, 255).astype(np.uint8)
+    return out
+
+
 def tile_grid_frames(
     frames_per_video: List[List[np.ndarray]],
     rows: int = 2,
     cols: int = 3,
     border_px: int = 2,
     border_color: Tuple[int, int, int] = (30, 41, 59),
+    banner_height: int = 54,
 ) -> List[np.ndarray]:
     """Tile multiple frame sequences into a synchronized grid video.
+
+    Extends shorter panel streams by repeating their final frame dimmed by 50%
+    below the HUD banner while preserving the top HUD bar at full brightness.
 
     Args:
         frames_per_video: List of length K, each a list of frames.
@@ -376,6 +408,7 @@ def tile_grid_frames(
         cols: Grid column count.
         border_px: Pixel width of border line between cells.
         border_color: RGB tuple for borders.
+        banner_height: Height of top HUD banner preserved at 100% brightness.
 
     Returns:
         List of synchronized composite frames.
@@ -386,13 +419,33 @@ def tile_grid_frames(
             f"Expected at least {total_slots} video streams for {rows}x{cols} grid, got {len(frames_per_video)}"
         )
 
-    # Synchronized temporal horizon T
-    T = min(len(f) for f in frames_per_video[:total_slots])
+    # Check for empty streams and find maximum horizon T
+    lengths = [len(f) for f in frames_per_video[:total_slots]]
+    T = max(lengths) if lengths else 0
     if T == 0:
         raise ValueError("Cannot tile empty frame lists.")
 
-    sample_frame = frames_per_video[0][0]
+    sample_frame = None
+    for f in frames_per_video[:total_slots]:
+        if len(f) > 0:
+            sample_frame = f[0]
+            break
+    if sample_frame is None:
+        raise ValueError("No frames available across video streams.")
+
     H, W, C = sample_frame.shape
+
+    # Pad shorter streams to T with 50% dimmed final frame
+    padded_streams: List[List[np.ndarray]] = []
+    for f_list in frames_per_video[:total_slots]:
+        stream = list(f_list)
+        if len(stream) == 0:
+            stream = [np.zeros((H, W, C), dtype=np.uint8)]
+        if len(stream) < T:
+            last_frame = stream[-1]
+            dimmed_last = dim_environment_scene(last_frame, banner_height=banner_height, dim_factor=0.5)
+            stream.extend([dimmed_last] * (T - len(stream)))
+        padded_streams.append(stream)
 
     grid_frames: List[np.ndarray] = []
 
@@ -407,9 +460,8 @@ def tile_grid_frames(
             cells = []
             for c in range(cols):
                 idx = r * cols + c
-                cell_frame = frames_per_video[idx][t]
+                cell_frame = padded_streams[idx][t]
                 if cell_frame.shape != (H, W, C):
-                    # Resize if slight mismatch
                     cell_img = Image.fromarray(cell_frame).resize((W, H))
                     cell_frame = np.array(cell_img)
                 cells.append(cell_frame)
@@ -424,6 +476,66 @@ def tile_grid_frames(
         grid_frames.append(grid_t)
 
     return grid_frames
+
+
+def create_progression_grid(
+    rollout_results: Union[List[Dict[str, Any]], List[List[np.ndarray]]],
+    output_path: Optional[str] = None,
+    rows: int = 2,
+    cols: int = 3,
+    fps: int = 30,
+    banner_height: int = 54,
+    border_px: int = 2,
+    border_color: Tuple[int, int, int] = (30, 41, 59),
+) -> List[np.ndarray]:
+    """Synthesize a synchronized NxM comparison grid from checkpoint rollouts.
+
+    Detects panels with fewer frames than the longest panel, holding their final frame
+    with the 3D scene dimmed by 50% below the HUD banner while keeping the HUD at 100% brightness.
+    """
+    raw_streams: List[List[np.ndarray]] = []
+    for item in rollout_results:
+        if isinstance(item, dict) and "frames" in item:
+            raw_streams.append(list(item["frames"]))
+        elif isinstance(item, list):
+            raw_streams.append(list(item))
+        else:
+            raise TypeError(f"Unexpected item type in rollout_results: {type(item)}")
+
+    tiled = tile_grid_frames(
+        frames_per_video=raw_streams,
+        rows=rows,
+        cols=cols,
+        border_px=border_px,
+        border_color=border_color,
+        banner_height=banner_height,
+    )
+    if output_path:
+        save_video(tiled, output_path, fps=fps)
+    return tiled
+
+
+def create_progression_reel(
+    rollout_results: Union[List[Dict[str, Any]], List[List[np.ndarray]]],
+    output_path: Optional[str] = None,
+    fps: int = 30,
+) -> List[np.ndarray]:
+    """Concatenate checkpoint rollout frame arrays sequentially into a master progression reel.
+
+    Transitions instantly between checkpoints without artificial dead-frame holds.
+    """
+    reel_frames: List[np.ndarray] = []
+    for item in rollout_results:
+        if isinstance(item, dict) and "frames" in item:
+            reel_frames.extend(item["frames"])
+        elif isinstance(item, list):
+            reel_frames.extend(item)
+        else:
+            raise TypeError(f"Unexpected item type in rollout_results: {type(item)}")
+
+    if output_path:
+        save_video(reel_frames, output_path, fps=fps)
+    return reel_frames
 
 
 def save_video(
@@ -619,6 +731,43 @@ def main():
     parser.add_argument("--interactive", action="store_true", help="Launch live interactive desktop window")
     parser.add_argument("--device", type=str, default="cpu", help="Compute device")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument(
+        "--no-truncate",
+        action="store_false",
+        dest="truncate_inactive",
+        default=True,
+        help="Disable video inactivity truncation and record full max_steps",
+    )
+    parser.add_argument(
+        "--speed-threshold",
+        type=float,
+        default=0.05,
+        help="Forward velocity magnitude threshold below which agent is considered inactive",
+    )
+    parser.add_argument(
+        "--patience",
+        type=int,
+        default=30,
+        help="Consecutive inactive steps required to trigger truncation",
+    )
+    parser.add_argument(
+        "--padding-frames",
+        type=int,
+        default=15,
+        help="Trailing frames to record after truncation trigger before halting",
+    )
+    parser.add_argument(
+        "--warmup-steps",
+        type=int,
+        default=60,
+        help="Initial steps to ignore inactivity, allowing robot spawn and motion attempt",
+    )
+    parser.add_argument(
+        "--stagnation-delta",
+        type=float,
+        default=0.01,
+        help="Velocity standard deviation threshold for in-place stagnation detection",
+    )
 
     args = parser.parse_args()
     seed_everything(args.seed)
@@ -647,6 +796,12 @@ def main():
             seed=args.seed,
             overlay=args.overlay,
             fps=args.fps,
+            truncate_inactive=args.truncate_inactive,
+            speed_threshold=args.speed_threshold,
+            patience=args.patience,
+            padding_frames=args.padding_frames,
+            warmup_steps=args.warmup_steps,
+            stagnation_delta=args.stagnation_delta,
         )
         saved = save_video(telemetry["frames"], out_path, fps=args.fps)
         print(f"Saved single video -> {saved}")
