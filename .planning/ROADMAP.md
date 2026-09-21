@@ -103,7 +103,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves | 2/2 | Complete | 2026-09-09 |
 | 5. Policy Progression Visualization Across Spaced Checkpoints | 2/2 | Complete    | 2026-09-09 |
 | 6. Compute Hierarchy for Multi-Tier Benchmark Experiments | 2/2 | Complete | 2026-09-10 |
-| 7. Evaluation Video Inactivity Truncation and Stagnation Detection | 1/2 | In Progress|  |
+| 7. Evaluation Video Inactivity Truncation and Stagnation Detection | 2/2 | Complete | 2026-09-21 |
 | 8. Multi-Tier Compute Hierarchy and Google Colab Integration | 0/0 | Not planned | - |
 
 ### Phase 5: Policy Progression Visualization Across Spaced Checkpoints
@@ -159,14 +159,12 @@ Plans:
   4. CLI arguments (`--truncate-inactive`, thresholds, patience, padding) are exposed in `src/tqc/visualize.py` with sensible defaults.
   5. Unit tests verify truncation logic on stationary/stagnant and active agent mock rollouts.
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans executed
 
 Plans:
 
-- [x] 07-01-PLAN.md
-- [ ] 07-02-PLAN.md
-
-- [ ] TBD (run /gsd-plan-phase 7 to break down)
+- [x] 07-01: Inactivity Truncation and Render Skipping Engine
+- [x] 07-02: Presentation Layer, Selective Grid Dimming & CLI
 
 ### Phase 8: Multi-Tier Compute Hierarchy and Google Colab Integration
 

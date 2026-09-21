@@ -40,6 +40,12 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **VIZ-02**: Empirical overestimation bias analysis script comparing estimated Q-values against actual Monte Carlo rollouts.
 - [x] **VIZ-03**: Summary results table comparing reproduced scores against Table 1 & Table 2 in Kuznetsov et al. (ICML 2020).
 
+### Evaluation Video Inactivity Truncation & Stagnation Detection (TRUNC / Issue #8)
+
+- [x] **TRUNC-01**: Adaptive dual-metric inactivity and stagnation detection in rollout loop with configurable warmup and trailing padding frames.
+- [x] **TRUNC-02**: OpenGL render-skipping optimization on post-truncation steps with strict simulation return and step count preservation.
+- [x] **TRUNC-03**: Amber status badge HUD overlays, 50% selective 3D scene dimming for freeze-frame multi-video grids, progression reels, and CLI flags.
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -83,6 +89,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIZ-01 | Phase 4 | Complete |
 | VIZ-02 | Phase 4 | Complete |
 | VIZ-03 | Phase 4 | Complete |
+| Issue #8 | Phase 7 | Complete |
 
 **Coverage:**
 - v1 requirements: 18 total
