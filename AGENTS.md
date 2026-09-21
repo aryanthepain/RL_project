@@ -27,7 +27,8 @@ Technology stack not yet documented. Will populate after codebase mapping or fir
 
 ## Conventions
 
-Conventions not yet established. Will populate as patterns emerge during development.
+- **Issue & PR Linkage**: Every PR must query open issues via `gh issue list --state open` and link relevant issues using `Closes #<issue>` / `Fixes #<issue>` in the title and description.
+- **Issue Closure**: Verify all corresponding issues are closed upon merge. If an issue was not closed automatically, immediately comment and close it with a comprehensive completion summary referencing the merged PR and commit SHA.
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
