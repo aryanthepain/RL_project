@@ -27,6 +27,7 @@ def build_kernel_metadata(
     enable_gpu: bool = True,
     enable_internet: bool = True,
     is_private: bool = True,
+    machine_shape: Optional[str] = "NvidiaTeslaT4",
 ) -> Dict[str, Any]:
     """Build standard Kaggle kernel-metadata.json configuration.
 
@@ -38,6 +39,7 @@ def build_kernel_metadata(
         enable_gpu: Whether to request GPU accelerator (default True).
         enable_internet: Whether internet access is enabled (default True).
         is_private: Whether the kernel is private (default True).
+        machine_shape: Specific Kaggle accelerator shape (default 'NvidiaTeslaT4').
 
     Returns:
         Dictionary adhering to Kaggle CLI kernel-metadata schema.
@@ -45,7 +47,7 @@ def build_kernel_metadata(
     if not username or not kernel_slug or not title:
         raise KagglePackagingError("username, kernel_slug, and title are required for kernel metadata.")
 
-    return {
+    meta = {
         "id": f"{username}/{kernel_slug}",
         "title": title,
         "code_file": code_file,
@@ -60,6 +62,9 @@ def build_kernel_metadata(
         "kernel_sources": [],
         "model_sources": [],
     }
+    if enable_gpu and machine_shape:
+        meta["machine_shape"] = machine_shape
+    return meta
 
 
 def _get_b64_source_payload(source_root: Optional[Union[str, Path]] = None) -> str:
@@ -171,16 +176,25 @@ if torch.cuda.is_available():
         if cap_major >= 7:
             has_cuda = True
             torch.backends.cudnn.benchmark = True
-            print("CUDA capability supported. GPU acceleration active.")
+            print("CUDA capability supported. Full GPU acceleration active.")
         else:
-            print(f"Notice: GPU capability {{cap_major}}.{{cap_minor}} (<7.0) is not supported by PyTorch 2.6+. Gracefully using CPU.")
+            print(f"Error: GPU {{gpu_name}} (Capability {{cap_major}}.{{cap_minor}} < 7.0) is not supported by PyTorch 2.6+.")
     except Exception as e:
-        print(f"CUDA capability query error: {{e}}. Falling back to CPU.")
+        print(f"CUDA query error: {{e}}")
 else:
     print("CUDA not available.")
 
-chosen_device = "cuda" if (has_cuda and "{device}" != "cpu") else "cpu"
-print(f"Selected compute device: {{chosen_device}}")
+if "{device}" == "cuda":
+    if not has_cuda:
+        raise RuntimeError(
+            "STRICT GPU CHECK FAILED: Execution requested on CUDA, but no compatible GPU is active! "
+            "Aborting immediately to prevent slow CPU execution."
+        )
+    chosen_device = "cuda"
+else:
+    chosen_device = "cpu"
+
+print(f"Verified compute device: {{chosen_device}}")
 
 # 4. Launch TQC Training
 print("\\n[4/5] Launching TQC Training Loop...")

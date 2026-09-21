@@ -20,6 +20,7 @@ class RemoteJob:
     env_id: str
     seed: int
     kernel_id: Optional[str] = None
+    accelerator: Optional[str] = "NvidiaTeslaT4"
     status: str = "pending"  # pending, queued, running, complete, error
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     started_at: Optional[str] = None
@@ -62,6 +63,7 @@ class DualSlotQueueManager:
         env_id: str,
         seed: int,
         kernel_id: Optional[str] = None,
+        accelerator: Optional[str] = "NvidiaTeslaT4",
     ) -> RemoteJob:
         """Enqueue a new experiment job."""
         job = RemoteJob(
@@ -70,6 +72,7 @@ class DualSlotQueueManager:
             env_id=env_id,
             seed=seed,
             kernel_id=kernel_id or job_id,
+            accelerator=accelerator,
         )
         self.pending_jobs.append(job)
         return job
@@ -116,6 +119,8 @@ class DualSlotQueueManager:
     def _default_dispatch_job(self, job: RemoteJob) -> bool:
         """Push kernel directory via Kaggle CLI."""
         cmd = ["kaggle", "kernels", "push", "-p", job.kernel_dir]
+        if job.accelerator:
+            cmd.extend(["--accelerator", job.accelerator])
         try:
             res = subprocess.run(cmd, capture_output=True, text=True, check=True)
             return True
