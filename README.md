@@ -127,7 +127,7 @@ Every developer on the team should maintain their own Kaggle account and API tok
 
 - **Default Branch (`main`) is Protected**: Never commit directly to `main`.
 - **Feature & Phase Branches**:
-  - For benchmark trainings: `gsd/phase-09-cheetah-hopper-runs`
+  - For benchmark trainings: `gsd/phase-09-hopper-runs`
   - For new features: `feat/<name>`
   - For bug fixes: `fix/<name>`
 - **Link Every PR to a GitHub Issue**:
@@ -349,10 +349,12 @@ The reproduction is structured across distinct roadmap phases tracked in `.plann
 | **06** | Compute Hierarchy & Kaggle Remote Execution | Completed | [#7](https://github.com/aryanthepain/RL_project/issues/7) |
 | **07** | Evaluation Video Inactivity Truncation | Completed | [#8](https://github.com/aryanthepain/RL_project/issues/8) |
 | **08** | Multi-Tier Compute Hierarchy & Colab | Completed | [#4](https://github.com/aryanthepain/RL_project/issues/4) |
-| **09** | Benchmark Training: HalfCheetah-v4 & Hopper-v4 (5 seeds) | Upcoming | [#13](https://github.com/aryanthepain/RL_project/issues/13) |
-| **10** | Benchmark Training: Walker2d-v4 & Ant-v4 (5 seeds) | Upcoming | [#14](https://github.com/aryanthepain/RL_project/issues/14) |
-| **11** | Benchmark Training: Humanoid-v4 & Benchmark Aggregation | Upcoming | [#15](https://github.com/aryanthepain/RL_project/issues/15) |
-| **12** | Team Onboarding, Documentation Suite & Collaboration | Active | [#12](https://github.com/aryanthepain/RL_project/issues/12) |
+| **Foundation** | Team Onboarding, Documentation Suite & Collaboration | Completed | [#12](https://github.com/aryanthepain/RL_project/issues/12) |
+| **09** | Benchmark Training: Hopper-v4 (5 seeds) | Upcoming | [#13](https://github.com/aryanthepain/RL_project/issues/13) |
+| **10** | Benchmark Training: Walker2d-v4 (5 seeds) | Upcoming | [#14](https://github.com/aryanthepain/RL_project/issues/14) |
+| **11** | Benchmark Training: Ant-v4 (5 seeds) | Upcoming | [#17](https://github.com/aryanthepain/RL_project/issues/17) |
+| **12** | Benchmark Training: Humanoid-v4 (5 seeds) | Upcoming | [#15](https://github.com/aryanthepain/RL_project/issues/15) |
+| **13** | Cross-Benchmark Suite Aggregation & Replication Curves | Upcoming | [#18](https://github.com/aryanthepain/RL_project/issues/18) |
 
 ---
 

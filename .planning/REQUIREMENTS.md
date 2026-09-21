@@ -90,10 +90,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIZ-02 | Phase 4 | Complete |
 | VIZ-03 | Phase 4 | Complete |
 | Issue #8 | Phase 7 | Complete |
+| Issue #4 | Phase 8 | Complete |
+| Issue #12 | Foundation | Complete |
+| Issue #13 (Hopper-v4) | Phase 9 | Upcoming |
+| Issue #14 (Walker2d-v4) | Phase 10 | Upcoming |
+| Issue #17 (Ant-v4) | Phase 11 | Upcoming |
+| Issue #15 (Humanoid-v4) | Phase 12 | Upcoming |
+| Issue #18 (Suite Aggregation) | Phase 13 | Upcoming |
 
 **Coverage:**
-- v1 requirements: 18 total
-- Mapped to phases: 18
+- Active upcoming phases: 5 mapped to GitHub issues (#13, #14, #17, #15, #18)
 - Unmapped: 0 ✓
 
 ---

@@ -10,7 +10,7 @@ This document defines the strict engineering guidelines, Git workflow protocols,
 The `main` branch is protected and contains only verified, reproducible milestone releases. All work—whether an entire GSD phase, an experimental feature, or a small bugfix—must originate on a dedicated branch.
 
 ### Branch Naming Standards
-- **GSD Phases**: `gsd/phase-<N>-<slug>` (e.g., `gsd/phase-09-cheetah-hopper-runs`)
+- **GSD Phases**: `gsd/phase-<N>-<slug>` (e.g., `gsd/phase-09-hopper-runs`)
 - **Features & Enhancements**: `feat/<short-slug>` (e.g., `feat/team-onboarding-docs`)
 - **Bug Fixes**: `fix/<short-slug>` (e.g., `fix/inactivity-threshold-edge-case`)
 - **Documentation**: `docs/<short-slug>` (e.g., `docs/colab-guide-update`)
