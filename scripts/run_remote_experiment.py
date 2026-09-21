@@ -194,12 +194,14 @@ def run_experiment(
         max_concurrent_slots=matrix_cfg.get("max_concurrent_gpu_slots", 2),
     )
     kernel_id = f"{username}/{kernel_slug}"
+    acc = "NvidiaTeslaT4" if device == "cuda" else None
     job = queue_mgr.add_job(
         job_id=f"{env_id}_s{seed}",
         kernel_dir=packaged_path,
         env_id=env_id,
         seed=seed,
         kernel_id=kernel_id,
+        accelerator=acc,
     )
 
     if detach:

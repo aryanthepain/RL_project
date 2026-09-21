@@ -86,6 +86,49 @@ python -u scripts/run_halfcheetah_progression.py \
     --eval-frames 500
 ```
 
+### D. Single Checkpoint Video Rollout with HUD (GitHub Issue #5 / #6)
+
+To render a standalone video with diagnostic HUD overlay from any single `.pt` model checkpoint:
+
+```bash
+python scripts/generate_checkpoint_video.py \
+    --checkpoint runs/kaggle_halfcheetah_pilot_1m_s42/checkpoint_1000000.pt \
+    --output videos/halfcheetah_1m.mp4 \
+    --env HalfCheetah-v4 \
+    --frames 500 \
+    --fps 30
+```
+
+Or using the core module directly:
+
+```bash
+# Headless MP4/GIF export
+python -m src.tqc.visualize \
+    --model-path runs/demo_experiment/tqc_halfcheetah_demo/best_model.pt \
+    --env-id HalfCheetah-v4 \
+    --output videos/halfcheetah_rollout.mp4 \
+    --max-steps 500
+
+# Native live interactive desktop GLFW viewer
+python -m src.tqc.visualize \
+    --model-path runs/demo_experiment/tqc_halfcheetah_demo/best_model.pt \
+    --env-id HalfCheetah-v4 \
+    --interactive
+```
+
+### E. 1M Pilot Milestone Rollouts & Synchronized 2x3 Grid Comparison
+
+To render all 6 milestone checkpoints (0, 50k, 200k, 500k, 800k, 1M) and composite them into a synchronized 2x3 comparison video:
+
+```bash
+python scripts/generate_1m_progression_videos.py \
+    --run-dir runs/kaggle_halfcheetah_pilot_1m_s42 \
+    --output-dir videos/halfcheetah_1m_progression \
+    --grid-output videos/halfcheetah_1m_6way_grid.mp4 \
+    --frames-per-video 500 \
+    --fps 30
+```
+
 ---
 
 ## 4. Video Compositing Details
