@@ -13,7 +13,7 @@ A systematic 4-phase horizontal roadmap taking the project from foundational the
 - [x] **Phase 5: Policy Progression Visualization Across Spaced Checkpoints** - Focused visualization pipeline for HalfCheetah actor policy across 100 checkpoints with 6-way grid, master montage, and HUD telemetry (Issues #5, #6).
 - [x] **Phase 6: Compute Hierarchy for Multi-Tier Benchmark Experiments** - Priority compute framework with Kaggle GPU remote execution, pre-flight checks, dual-slot queue, and artifact synchronization (Issue #7).
 - [x] **Phase 7: Evaluation Video Inactivity Truncation and Stagnation Detection** - Early video recording truncation on stationary velocity or stagnation delta thresholds with trailing frame padding (Issue #8). (completed 2026-09-21)
-- [ ] **Phase 8: Multi-Tier Compute Hierarchy and Google Colab Integration** - Complete multi-tier compute hierarchy (Kaggle > Colab > Local GPU > Local CPU) with runnable Colab notebook and tier auto-detection fallback (Issue #4).
+- [x] **Phase 8: Multi-Tier Compute Hierarchy and Google Colab Integration** - Complete multi-tier compute hierarchy (Kaggle > Colab > Local GPU > Local CPU) with runnable Colab notebook and tier auto-detection fallback (Issue #4). (completed 2026-09-21)
 
 ## Phase Details
 
@@ -104,7 +104,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Policy Progression Visualization Across Spaced Checkpoints | 2/2 | Complete    | 2026-09-09 |
 | 6. Compute Hierarchy for Multi-Tier Benchmark Experiments | 2/2 | Complete | 2026-09-10 |
 | 7. Evaluation Video Inactivity Truncation and Stagnation Detection | 2/2 | Complete   | 2026-09-21 |
-| 8. Multi-Tier Compute Hierarchy and Google Colab Integration | 0/2 | Planned | - |
+| 8. Multi-Tier Compute Hierarchy and Google Colab Integration | 2/2 | Complete   | 2026-09-21 |
 
 ### Phase 5: Policy Progression Visualization Across Spaced Checkpoints
 
@@ -181,9 +181,12 @@ Plans:
   3. Seamless benchmark execution dispatch across tiers for MuJoCo environments (HalfCheetah, Hopper, Walker2d, Ant, Humanoid).
   4. Unit and integration tests verify fallback resolution and notebook validity.
 
-**Plans**: 2 plans
+**Plans**: 2/2 plans complete
 
 Plans:
 
-- [ ] 08-01: Multi-Tier Compute Detection Engine, Dispatcher, Checkpoint Resumption & Unified CLI
-- [ ] 08-02: Google Colab Benchmark Notebook, Inactivity Truncation Video Player, Live Plotting & Drive Pruning Utility
+- [x] 08-01-PLAN.md
+- [x] 08-02-PLAN.md
+
+- [x] 08-01: Multi-Tier Compute Detection Engine, Dispatcher, Checkpoint Resumption & Unified CLI
+- [x] 08-02: Google Colab Benchmark Notebook, Inactivity Truncation Video Player, Live Plotting & Drive Pruning Utility
