@@ -12,7 +12,7 @@ A systematic 4-phase horizontal roadmap taking the project from foundational the
 - [x] **Phase 4: Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves** - Benchmarking runs on MuJoCo suite, overestimation bias analysis, and reproduction plotting matching ICML 2020 paper figures (Issue #2 completion).
 - [x] **Phase 5: Policy Progression Visualization Across Spaced Checkpoints** - Focused visualization pipeline for HalfCheetah actor policy across 100 checkpoints with 6-way grid, master montage, and HUD telemetry (Issues #5, #6).
 - [x] **Phase 6: Compute Hierarchy for Multi-Tier Benchmark Experiments** - Priority compute framework with Kaggle GPU remote execution, pre-flight checks, dual-slot queue, and artifact synchronization (Issue #7).
-- [ ] **Phase 7: Evaluation Video Inactivity Truncation and Stagnation Detection** - Early video recording truncation on stationary velocity or stagnation delta thresholds with trailing frame padding (Issue #8).
+- [x] **Phase 7: Evaluation Video Inactivity Truncation and Stagnation Detection** - Early video recording truncation on stationary velocity or stagnation delta thresholds with trailing frame padding (Issue #8). (completed 2026-09-21)
 - [ ] **Phase 8: Multi-Tier Compute Hierarchy and Google Colab Integration** - Complete multi-tier compute hierarchy (Kaggle > Colab > Local GPU > Local CPU) with runnable Colab notebook and tier auto-detection fallback (Issue #4).
 
 ## Phase Details
@@ -103,7 +103,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves | 2/2 | Complete | 2026-09-09 |
 | 5. Policy Progression Visualization Across Spaced Checkpoints | 2/2 | Complete    | 2026-09-09 |
 | 6. Compute Hierarchy for Multi-Tier Benchmark Experiments | 2/2 | Complete | 2026-09-10 |
-| 7. Evaluation Video Inactivity Truncation and Stagnation Detection | 2/2 | Complete | 2026-09-21 |
+| 7. Evaluation Video Inactivity Truncation and Stagnation Detection | 2/2 | Complete   | 2026-09-21 |
 | 8. Multi-Tier Compute Hierarchy and Google Colab Integration | 0/0 | Not planned | - |
 
 ### Phase 5: Policy Progression Visualization Across Spaced Checkpoints
@@ -159,9 +159,12 @@ Plans:
   4. CLI arguments (`--truncate-inactive`, thresholds, patience, padding) are exposed in `src/tqc/visualize.py` with sensible defaults.
   5. Unit tests verify truncation logic on stationary/stagnant and active agent mock rollouts.
 
-**Plans**: 2/2 plans executed
+**Plans**: 2/2 plans complete
 
 Plans:
+
+- [x] 07-01-PLAN.md
+- [x] 07-02-PLAN.md
 
 - [x] 07-01: Inactivity Truncation and Render Skipping Engine
 - [x] 07-02: Presentation Layer, Selective Grid Dimming & CLI
