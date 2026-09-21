@@ -28,6 +28,10 @@ This repository provides an exact PyTorch reproduction of the TQC algorithm, aut
 5. [Creating & Managing Kaggle Cloud Runs](#5-creating--managing-kaggle-cloud-runs)
 6. [Google Colab Setup & Generation](#6-google-colab-setup--generation)
 7. [Get Stuff Done (GSD) Workflow Guide](#7-get-stuff-done-gsd-workflow-guide)
+   - [GSD Setup & Prerequisites](#gsd-setup--prerequisites)
+   - [Core GSD Commands & Lifecycle](#core-gsd-commands--lifecycle)
+   - [Step-by-Step Phase Workflow](#step-by-step-phase-workflow)
+   - [The GSD Golden Invariants](#the-gsd-golden-invariants)
 8. [CLI Reference & Help Sections](#8-cli-reference--help-sections)
 9. [Repository Architecture & File Map](#9-repository-architecture--file-map)
 10. [Benchmark Roadmap & Phase Tracking](#10-benchmark-roadmap--phase-tracking)
@@ -127,7 +131,7 @@ Every developer on the team should maintain their own Kaggle account and API tok
 
 - **Default Branch (`main`) is Protected**: Never commit directly to `main`.
 - **Feature & Phase Branches**:
-  - For benchmark trainings: `gsd/phase-09-cheetah-hopper-runs`
+  - For benchmark trainings: `gsd/phase-09-hopper-runs`
   - For new features: `feat/<name>`
   - For bug fixes: `fix/<name>`
 - **Link Every PR to a GitHub Issue**:
@@ -235,22 +239,99 @@ This generates `notebooks/colab_tqc_benchmark.ipynb`.
 
 ## 7. Get Stuff Done (GSD) Workflow Guide
 
-This project is organized using the **GSD (Get Stuff Done)** autonomous execution framework. GSD maintains persistent context in `.planning/` across sessions and enforces rigorous planning and verification gates.
+This project is structured and executed using the **GSD (Get Stuff Done)** autonomous execution framework. GSD provides persistent context across sessions in `.planning/`, enforces rigorous planning gates, and guarantees deterministic verification before shipping code.
 
-### Core GSD Commands for Team Members
+### GSD Setup & Prerequisites
 
-When working with an Antigravity AI pair programmer, use the following slash commands:
+To set up and run GSD workflows with your AI agent, configure the following prerequisites:
 
-- **`/gsd-phase`**: Multi-phase management. Add, insert, reorder, or inspect phases in `.planning/ROADMAP.md`.
-- **`/gsd-discuss-phase`**: Phase kickoff and context gathering. Discuss requirements, design constraints, and trade-offs before authoring code.
-- **`/gsd-plan-phase`**: Authors the detailed `PLAN.md` specification with atomic tasks, files to modify, and verification commands.
-- **`/gsd-execute-phase`**: Executes planned phases with dependency-aware wave parallelization, automated testing, and atomic commits.
-- **`/gsd-verify-work`**: Conducts conversational UAT (User Acceptance Testing) to ensure all deliverables meet paper fidelity.
-- **`/gsd-ship`**: Prepares the work for merging: verifies all deterministic tests pass, queries open GitHub issues via `gh issue list`, generates PR summaries linking issues (`Closes #...`), and creates the PR.
-- **`/gsd-quick`**: For small fixes, documentation updates, or ad-hoc tasks that do not require multi-plan decomposition.
+#### 1. AI Agent Environment (Antigravity IDE or Claude Code)
+GSD operates through specialized agent skills and rules:
+- **Global Customizations**: Skills are automatically discovered and loaded from `~/.gemini/config/skills/` (or `.agents/skills/` in the project root).
+- **Global Rules & Invariants**: Loaded from `~/.gemini/config/rules/global_rules.md`, enforcing lean orchestrator context, Ponytail anti-bloat ladder, and Karpathy surgical disciplines.
 
-### The GSD Golden Invariant
-> **No Unplanned Commits**: Never edit codebase files outside of a planned GSD phase or `/gsd-quick` task. This ensures the `.planning/` roadmap and Git history remain 100% in sync across all team members.
+#### 2. GitHub CLI (`gh`) Authentication
+GSD automates open issue discovery, PR title/body formatting, and issue-to-PR closure linkage.
+```bash
+# Authenticate GitHub CLI
+gh auth login
+
+# Verify credentials and view open project issues
+gh issue list --state open
+```
+
+#### 3. Node.js Runtime (v18+)
+GSD utilizes background worker subagents (`node ./scripts/subagent.js` or global equivalent) to offload multi-file codebase research, isolated code synthesis, and independent adversarial code reviews without polluting the primary orchestrator's context window:
+```bash
+# Verify Node.js is installed
+node --version
+```
+
+#### 4. PowerShell (`pwsh`)
+PowerShell is used by GSD to execute deterministic local test gates and trigger spoken completion alerts via `agent-alarm.ps1`:
+```bash
+# Verify PowerShell 7+
+pwsh -Command "Write-Host 'PowerShell operational'"
+```
+
+#### 5. Project State Synchronization
+Because all GSD planning artifacts (`.planning/PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md`, `STATE.md`, and `config.json`) are committed to Git, no external database or server is required:
+- When you clone this repository, GSD automatically discovers the existing phases, requirements, and progress state.
+- **Audit GSD Health**: Run `/gsd-health` in your agent prompt to diagnose `.planning/` file integrity.
+- **Inspect Current Position**: Run `/gsd-progress` to display the active phase, completed plans, and next planned action.
+
+---
+
+### Core GSD Commands & Lifecycle
+
+When collaborating with an Antigravity AI pair programmer, interact using the following slash commands:
+
+| Command | Purpose | When to Use |
+|---|---|---|
+| **`/gsd-progress`** | Situational situational report | Check current milestone, active phase, completed plans, and next actions. |
+| **`/gsd-discuss-phase <N>`** | Phase kickoff & Socratic grilling | Gather requirements, surface trade-offs, and align before planning. |
+| **`/gsd-plan-phase <N>`** | Create atomic phase plan (`PLAN.md`) | Break down phase into atomic, testable execution plans with dependency waves. |
+| **`/gsd-execute-phase <N>`** | Autonomous plan execution | Execute plans with automated test gates and atomic git commits. |
+| **`/gsd-verify-work`** | Interactive UAT | Verify deliverables meet paper fidelity and acceptance criteria. |
+| **`/gsd-ship`** | PR preparation & automated closure | Run test gates, discover open GitHub issues, and open PR with `Closes #...`. |
+| **`/gsd-quick "<task>"`** | Fast ad-hoc task delivery | Execute small bugfixes, documentation updates, or minor tweaks. |
+| **`/gsd-debug "<problem>"`** | Systematic root-cause debugging | Persistent debugging workflow across context resets. |
+
+---
+
+### Step-by-Step Phase Workflow
+
+Here is the standard lifecycle for executing any planned phase (e.g., Phase 09 Hopper-v4):
+
+```bash
+# Step 1: Check project status and confirm active phase
+/gsd-progress
+
+# Step 2: Discuss phase requirements and resolve ambiguities
+/gsd-discuss-phase 9
+
+# Step 3: Author detailed execution plans (09-01-PLAN.md, etc.)
+/gsd-plan-phase 9
+
+# Step 4: Execute all plans on dedicated branch (gsd/phase-09-hopper-runs)
+/gsd-execute-phase 9
+
+# Step 5: Validate deliverables against success criteria
+/gsd-verify-work
+
+# Step 6: Verify 105 tests pass and ship PR linking Issue #13
+/gsd-ship
+```
+
+---
+
+### The GSD Golden Invariants
+
+> [!IMPORTANT]
+> 1. **No Unplanned Commits**: Never edit codebase files outside of a planned GSD phase or `/gsd-quick` task. This ensures the `.planning/` roadmap and Git history remain 100% in sync across all team members.
+> 2. **Protected `main` Branch**: Never push directly to `main`. Always create dedicated feature/phase branches (`gsd/phase-<N>-<slug>` or `feat/<name>`).
+> 3. **Zero Orphan Issues**: Every PR must query open issues via `gh issue list --state open` and link the corresponding issue with `Closes #<issue>` in the title, body, and commit.
+> 4. **Deterministic Verification**: Every change must pass `python -m pytest tests/` before staging or merging.
 
 ---
 
@@ -349,10 +430,12 @@ The reproduction is structured across distinct roadmap phases tracked in `.plann
 | **06** | Compute Hierarchy & Kaggle Remote Execution | Completed | [#7](https://github.com/aryanthepain/RL_project/issues/7) |
 | **07** | Evaluation Video Inactivity Truncation | Completed | [#8](https://github.com/aryanthepain/RL_project/issues/8) |
 | **08** | Multi-Tier Compute Hierarchy & Colab | Completed | [#4](https://github.com/aryanthepain/RL_project/issues/4) |
-| **09** | Benchmark Training: HalfCheetah-v4 & Hopper-v4 (5 seeds) | Upcoming | [#13](https://github.com/aryanthepain/RL_project/issues/13) |
-| **10** | Benchmark Training: Walker2d-v4 & Ant-v4 (5 seeds) | Upcoming | [#14](https://github.com/aryanthepain/RL_project/issues/14) |
-| **11** | Benchmark Training: Humanoid-v4 & Benchmark Aggregation | Upcoming | [#15](https://github.com/aryanthepain/RL_project/issues/15) |
-| **12** | Team Onboarding, Documentation Suite & Collaboration | Active | [#12](https://github.com/aryanthepain/RL_project/issues/12) |
+| **Foundation** | Team Onboarding, Documentation Suite & Collaboration | Completed | [#12](https://github.com/aryanthepain/RL_project/issues/12) |
+| **09** | Benchmark Training: Hopper-v4 (5 seeds) | Upcoming | [#13](https://github.com/aryanthepain/RL_project/issues/13) |
+| **10** | Benchmark Training: Walker2d-v4 (5 seeds) | Upcoming | [#14](https://github.com/aryanthepain/RL_project/issues/14) |
+| **11** | Benchmark Training: Ant-v4 (5 seeds) | Upcoming | [#17](https://github.com/aryanthepain/RL_project/issues/17) |
+| **12** | Benchmark Training: Humanoid-v4 (5 seeds) | Upcoming | [#15](https://github.com/aryanthepain/RL_project/issues/15) |
+| **13** | Cross-Benchmark Suite Aggregation & Replication Curves | Upcoming | [#18](https://github.com/aryanthepain/RL_project/issues/18) |
 
 ---
 

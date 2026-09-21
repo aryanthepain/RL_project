@@ -14,10 +14,12 @@ A systematic 4-phase horizontal roadmap taking the project from foundational the
 - [x] **Phase 6: Compute Hierarchy for Multi-Tier Benchmark Experiments** - Priority compute framework with Kaggle GPU remote execution, pre-flight checks, dual-slot queue, and artifact synchronization (Issue #7).
 - [x] **Phase 7: Evaluation Video Inactivity Truncation and Stagnation Detection** - Early video recording truncation on stationary velocity or stagnation delta thresholds with trailing frame padding (Issue #8). (completed 2026-09-21)
 - [x] **Phase 8: Multi-Tier Compute Hierarchy and Google Colab Integration** - Complete multi-tier compute hierarchy (Kaggle > Colab > Local GPU > Local CPU) with runnable Colab notebook and tier auto-detection fallback (Issue #4). (completed 2026-09-21)
-- [ ] **Phase 9: Benchmark Training: HalfCheetah-v4 and Hopper-v4** - Distributed multi-seed benchmark training (1M steps, 5 seeds each) across team Kaggle/Colab slots (Issue #13).
-- [ ] **Phase 10: Benchmark Training: Walker2d-v4 and Ant-v4** - Distributed multi-seed benchmark training (1M steps, 5 seeds each) across team Kaggle/Colab slots (Issue #14).
-- [ ] **Phase 11: Benchmark Training: Humanoid-v4 & Benchmark Suite Aggregation** - Humanoid-v4 training (3M steps, 5 seeds) and cross-benchmark comparative replication curve generation (Issue #15).
-- [ ] **Phase 12: Team Onboarding, Repository Documentation Suite & Collaboration Foundation** - Comprehensive developer portal, README with Kaggle/Colab/CUDA/GSD guides, ARCHITECTURE.md, TESTING.md, CONVENTIONS.md, STACK.md, requirements.txt, .env.example, and PR templates (Issue #12).
+- [x] **Foundation: Team Onboarding, Repository Documentation Suite & Collaboration Foundation** - Comprehensive developer portal, README with Kaggle/Colab/CUDA/GSD guides, ARCHITECTURE.md, TESTING.md, CONVENTIONS.md, STACK.md, requirements.txt, .env.example, and PR templates (Issue #12, PR #16). (completed 2026-09-21)
+- [ ] **Phase 9: Benchmark Training: Hopper-v4** - Distributed multi-seed benchmark training (1M steps, 5 seeds: 42, 43, 44, 45, 46) across team Kaggle/Colab slots (Issue #13).
+- [ ] **Phase 10: Benchmark Training: Walker2d-v4** - Distributed multi-seed benchmark training (1M steps, 5 seeds: 42, 43, 44, 45, 46) with inactivity truncation validation (Issue #14).
+- [ ] **Phase 11: Benchmark Training: Ant-v4** - Distributed multi-seed benchmark training (1M steps, 5 seeds: 42, 43, 44, 45, 46) across 8-dim action space (Issue #17).
+- [ ] **Phase 12: Benchmark Training: Humanoid-v4** - High-dimensional benchmark training (3M steps, 5 seeds: 42, 43, 44, 45, 46) across team GPU slots (Issue #15).
+- [ ] **Phase 13: Cross-Benchmark Suite Aggregation, Comparative Learning Curves & Results Table** - Multi-environment log aggregation, publication-grade learning curves with 95% CIs against baselines, and ICML 2020 reproduction performance table (Issue #18).
 
 ## Phase Details
 
@@ -109,6 +111,12 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 6. Compute Hierarchy for Multi-Tier Benchmark Experiments | 2/2 | Complete | 2026-09-10 |
 | 7. Evaluation Video Inactivity Truncation and Stagnation Detection | 2/2 | Complete   | 2026-09-21 |
 | 8. Multi-Tier Compute Hierarchy and Google Colab Integration | 2/2 | Complete    | 2026-09-21 |
+| Foundation: Team Onboarding & Documentation Suite | 1/1 | Complete | 2026-09-21 |
+| 9. Benchmark Training: Hopper-v4 | 0/0 | Upcoming | - |
+| 10. Benchmark Training: Walker2d-v4 | 0/0 | Upcoming | - |
+| 11. Benchmark Training: Ant-v4 | 0/0 | Upcoming | - |
+| 12. Benchmark Training: Humanoid-v4 | 0/0 | Upcoming | - |
+| 13. Cross-Benchmark Suite Aggregation | 0/0 | Upcoming | - |
 
 ### Phase 5: Policy Progression Visualization Across Spaced Checkpoints
 
@@ -195,43 +203,65 @@ Plans:
 - [x] 08-01: Multi-Tier Compute Detection Engine, Dispatcher, Checkpoint Resumption & Unified CLI
 - [x] 08-02: Google Colab Benchmark Notebook, Inactivity Truncation Video Player, Live Plotting & Drive Pruning Utility
 
-### Phase 9: Benchmark Training: HalfCheetah-v4 and Hopper-v4
-
-**Goal**: Execute 1M-step distributed training runs for HalfCheetah-v4 and Hopper-v4 across 5 random seeds (42, 43, 44, 45, 46) leveraging team Kaggle GPU slots (and Colab fallbacks) to collect evaluation returns and metrics.
-**Depends on**: Phase 8
-**Requirements**: Issue #13
-**Success Criteria** (what must be TRUE):
-  1. 5 seeds of HalfCheetah-v4 (1M steps) successfully trained and synced to `runs/`.
-  2. 5 seeds of Hopper-v4 (1M steps) successfully trained and synced to `runs/`.
-  3. Checkpoints, metrics.csv, and evaluation rollouts verified with clean run integrity.
-
-### Phase 10: Benchmark Training: Walker2d-v4 and Ant-v4
-
-**Goal**: Execute 1M-step distributed training runs for Walker2d-v4 and Ant-v4 across 5 random seeds (42, 43, 44, 45, 46) leveraging team Kaggle GPU slots.
-**Depends on**: Phase 9
-**Requirements**: Issue #14
-**Success Criteria** (what must be TRUE):
-  1. 5 seeds of Walker2d-v4 (1M steps) successfully trained and synced to `runs/`.
-  2. 5 seeds of Ant-v4 (1M steps) successfully trained and synced to `runs/`.
-  3. Inactivity truncation validated on stagnant Walker2d/Ant rollouts.
-
-### Phase 11: Benchmark Training: Humanoid-v4 & Benchmark Suite Aggregation
-
-**Goal**: Execute 3M-step benchmark training on Humanoid-v4 across 5 seeds and aggregate all experimental results across the 5 benchmark environments to reproduce Kuznetsov et al. (ICML 2020) comparative learning curves.
-**Depends on**: Phase 10
-**Requirements**: Issue #15
-**Success Criteria** (what must be TRUE):
-  1. Humanoid-v4 3M step runs completed across seeds.
-  2. Consolidated publication-grade learning curves plotted with mean return and 95% confidence intervals against SAC/TD3 baselines.
-  3. Comparative performance table compiled against paper reported values.
-
-### Phase 12: Team Onboarding, Repository Documentation Suite & Collaboration Foundation
+### Foundation: Team Onboarding, Repository Documentation Suite & Collaboration Foundation
 
 **Goal**: Establish comprehensive developer documentation, team setup guides (CUDA, Kaggle, Colab, GSD), ARCHITECTURE.md, TESTING.md, CONVENTIONS.md, STACK.md, requirements.txt, .env.example, and PR templates for multi-developer collaboration.
 **Depends on**: Phase 8
 **Requirements**: Issue #12
+**Status**: Completed 2026-09-21 (PR #16)
 **Success Criteria** (what must be TRUE):
   1. Complete README.md covering setup, CUDA, Kaggle, Colab, GSD workflow, CLI help, and multi-user workflow.
   2. ARCHITECTURE.md, TESTING.md, CONVENTIONS.md, STACK.md created with high-fidelity technical depth.
   3. requirements.txt and .env.example provide frictionless developer environment bootstrapping.
   4. GitHub PR template created and all 105 tests verified passing.
+
+### Phase 9: Benchmark Training: Hopper-v4
+
+**Goal**: Execute 1M-step distributed training runs for Hopper-v4 across 5 random seeds (42, 43, 44, 45, 46) leveraging team Kaggle GPU slots (and Colab fallbacks) to collect evaluation returns and metrics.
+**Depends on**: Phase 8, Foundation
+**Requirements**: Issue #13
+**Success Criteria** (what must be TRUE):
+  1. 5 random seeds (42, 43, 44, 45, 46) of Hopper-v4 (1M steps) successfully trained using exact TQC hyperparameters ($M=5, N=25, d=5$).
+  2. Periodic checkpoints saved every 10,000 steps and evaluation metrics logged to `runs/Hopper-v4/`.
+  3. Checkpoints, metrics.csv, and evaluation rollouts synced to local runs directory with integrity verification.
+
+### Phase 10: Benchmark Training: Walker2d-v4
+
+**Goal**: Execute 1M-step distributed training runs for Walker2d-v4 across 5 random seeds (42, 43, 44, 45, 46) leveraging team Kaggle GPU slots, validating inactivity truncation on falling episodes.
+**Depends on**: Phase 9
+**Requirements**: Issue #14
+**Success Criteria** (what must be TRUE):
+  1. 5 random seeds (42, 43, 44, 45, 46) of Walker2d-v4 (1M steps) successfully trained using exact TQC hyperparameters ($M=5, N=25, d=5$).
+  2. Inactivity truncation and velocity stagnation detection validated on early falling/stagnant Walker2d episodes.
+  3. Checkpoints and evaluation metrics logged to `runs/Walker2d-v4/` and synced with integrity verification.
+
+### Phase 11: Benchmark Training: Ant-v4
+
+**Goal**: Execute 1M-step distributed training runs for Ant-v4 across 5 random seeds (42, 43, 44, 45, 46) leveraging team Kaggle GPU slots across the 8-dimensional continuous action space.
+**Depends on**: Phase 10
+**Requirements**: Issue #17
+**Success Criteria** (what must be TRUE):
+  1. 5 random seeds (42, 43, 44, 45, 46) of Ant-v4 (1M steps) successfully trained using exact TQC hyperparameters ($M=5, N=25, d=5$).
+  2. Learning stability verified across 8-DoF action space with target quantile distributions logged.
+  3. Checkpoints and evaluation metrics logged to `runs/Ant-v4/` and synced with integrity verification.
+
+### Phase 12: Benchmark Training: Humanoid-v4
+
+**Goal**: Execute 3M-step benchmark training on Humanoid-v4 across 5 random seeds (42, 43, 44, 45, 46) across the 17-dimensional continuous action space and 376-dimensional observation space.
+**Depends on**: Phase 11
+**Requirements**: Issue #15
+**Success Criteria** (what must be TRUE):
+  1. 5 random seeds (42, 43, 44, 45, 46) of Humanoid-v4 (3M steps) successfully trained using exact TQC hyperparameters ($M=5, N=25, d=5$).
+  2. Multi-developer GPU compute allocation managed effectively across 3M-step training budget.
+  3. Checkpoints, metrics.csv, and evaluation rollouts logged to `runs/Humanoid-v4/` and synced with integrity verification.
+
+### Phase 13: Cross-Benchmark Suite Aggregation, Comparative Learning Curves & Results Table
+
+**Goal**: Consolidate training metrics across all 5 MuJoCo continuous control benchmarks (HalfCheetah-v4 [already complete], Hopper-v4, Walker2d-v4, Ant-v4, Humanoid-v4) and reproduce ICML 2020 comparative learning curves and performance tables.
+**Depends on**: Phase 12
+**Requirements**: Issue #18
+**Success Criteria** (what must be TRUE):
+  1. Multi-seed metrics (`metrics.csv`) ingested and aggregated across all 5 continuous control benchmark environments.
+  2. Publication-grade comparative learning curves plotted with mean returns and 95% bootstrap confidence intervals against baseline curves (SAC, TD3).
+  3. Comparative performance table compiled against Kuznetsov et al. (ICML 2020) Table 1 & Table 2.
+  4. Empirical overestimation bias and quantile distribution analytics documented across all benchmark tasks.

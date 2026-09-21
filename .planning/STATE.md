@@ -75,13 +75,18 @@ Progress: [████░░░░░░] 38%
 
 ### Pending Todos
 
-- Plan Phase 07: Evaluation Video Inactivity Truncation and Stagnation Detection (Issue #8)
-- Plan Phase 08: Multi-Tier Compute Hierarchy and Google Colab Integration (Issue #4)
+- Plan Phase 09: Benchmark Training: Hopper-v4 (Issue #13)
+- Plan Phase 10: Benchmark Training: Walker2d-v4 (Issue #14)
+- Plan Phase 11: Benchmark Training: Ant-v4 (Issue #17)
+- Plan Phase 12: Benchmark Training: Humanoid-v4 (Issue #15)
+- Plan Phase 13: Cross-Benchmark Suite Aggregation, Comparative Learning Curves & Results Table (Issue #18)
 
 ### Roadmap Evolution
 
-- Phase 7 added: Evaluation Video Inactivity Truncation and Stagnation Detection (Issue #8)
-- Phase 8 added: Multi-Tier Compute Hierarchy and Google Colab Integration (Issue #4)
+- Phase 7 added: Evaluation Video Inactivity Truncation and Stagnation Detection (Issue #8) — Complete (PR #10)
+- Phase 8 added: Multi-Tier Compute Hierarchy and Google Colab Integration (Issue #4) — Complete (PR #11)
+- Foundation added: Team Onboarding, Repository Documentation Suite & Collaboration Foundation (Issue #12) — Complete (PR #16)
+- Benchmark training restructured into dedicated 1-task phases: Hopper-v4 (Phase 09, Issue #13), Walker2d-v4 (Phase 10, Issue #14), Ant-v4 (Phase 11, Issue #17), Humanoid-v4 (Phase 12, Issue #15), and Cross-Benchmark Suite Aggregation (Phase 13, Issue #18). HalfCheetah-v4 noted as completed.
 
 ### Blockers/Concerns
 
