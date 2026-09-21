@@ -104,7 +104,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Policy Progression Visualization Across Spaced Checkpoints | 2/2 | Complete    | 2026-09-09 |
 | 6. Compute Hierarchy for Multi-Tier Benchmark Experiments | 2/2 | Complete | 2026-09-10 |
 | 7. Evaluation Video Inactivity Truncation and Stagnation Detection | 2/2 | Complete   | 2026-09-21 |
-| 8. Multi-Tier Compute Hierarchy and Google Colab Integration | 0/0 | Not planned | - |
+| 8. Multi-Tier Compute Hierarchy and Google Colab Integration | 0/2 | Planned | - |
 
 ### Phase 5: Policy Progression Visualization Across Spaced Checkpoints
 
@@ -181,8 +181,9 @@ Plans:
   3. Seamless benchmark execution dispatch across tiers for MuJoCo environments (HalfCheetah, Hopper, Walker2d, Ant, Humanoid).
   4. Unit and integration tests verify fallback resolution and notebook validity.
 
-**Plans**: 0 plans
+**Plans**: 2 plans
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 8 to break down)
+- [ ] 08-01: Multi-Tier Compute Detection Engine, Dispatcher, Checkpoint Resumption & Unified CLI
+- [ ] 08-02: Google Colab Benchmark Notebook, Inactivity Truncation Video Player, Live Plotting & Drive Pruning Utility
