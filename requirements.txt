@@ -1,0 +1,32 @@
+# ==============================================================================
+# TQC Paper Reproduction & Analysis (ICML 2020) - Dependencies
+# ==============================================================================
+# Python: 3.10, 3.11, or 3.12 recommended
+
+# Core Deep Learning & Tensor Operations
+# NOTE: For GPU acceleration on NVIDIA hardware, install PyTorch matching your CUDA version:
+# pip install torch --index-url https://download.pytorch.org/whl/cu121
+torch>=2.2.0
+numpy>=1.24.0,<2.0.0
+
+# Reinforcement Learning & MuJoCo Simulation Harness
+gymnasium>=0.29.0
+gymnasium[mujoco]>=0.29.0
+mujoco>=3.0.0
+
+# Data Management & Configuration
+pandas>=2.0.0
+scipy>=1.11.0
+pyyaml>=6.0
+
+# Visualization, Video Rendering & Plotting
+matplotlib>=3.7.0
+seaborn>=0.12.0
+imageio>=2.30.0
+imageio-ffmpeg>=0.4.9
+
+# Cloud Infrastructure & Execution
+kaggle>=1.5.16
+
+# Testing & Verification
+pytest>=8.0.0

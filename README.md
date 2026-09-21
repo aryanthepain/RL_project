@@ -1,0 +1,362 @@
+# TQC: Truncated Quantile Critics (ICML 2020) Reproduction
+
+[![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.2%2B-ee4c2c.svg)](https://pytorch.org/)
+[![Gymnasium](https://img.shields.io/badge/Gymnasium-MuJoCo%20Continuous%20Control-green.svg)](https://gymnasium.farama.org/)
+[![Tests](https://img.shields.io/badge/Tests-105%20Passing-brightgreen.svg)](TESTING.md)
+[![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
+
+An academic and empirical reproduction of the ICML 2020 paper:  
+**"Controlling Overestimation Bias with Truncated Mixture of Continuous Distributional Quantile Critics"**  
+*Arsenii Kuznetsov, Pavel Shvechikov, Alexander Grishin, Dmitry Vetrov (Higher School of Economics & Yandex).*
+
+This repository provides an exact PyTorch reproduction of the TQC algorithm, automated multi-tier compute dispatching (Kaggle Cloud GPU > Google Colab > Local GPU > Local CPU), a progression visualization engine with inactivity truncation, and distributed multi-seed benchmark training infrastructure across standard continuous control MuJoCo tasks.
+
+---
+
+## Table of Contents
+
+1. [Quickstart (60 Seconds)](#1-quickstart-60-seconds)
+2. [Complete Developer Setup](#2-complete-developer-setup)
+   - [Python Environment](#python-environment)
+   - [PyTorch & CUDA Acceleration](#pytorch--cuda-acceleration)
+   - [MuJoCo Simulation Harness](#mujoco-simulation-harness)
+3. [Multi-Developer Team Collaboration](#3-multi-developer-team-collaboration)
+   - [Team Setup & Separate Kaggle Accounts](#team-setup--separate-kaggle-accounts)
+   - [Git Branching & PR Invariants](#git-branching--pr-invariants)
+4. [Multi-Tier Compute Hierarchy](#4-multi-tier-compute-hierarchy)
+5. [Creating & Managing Kaggle Cloud Runs](#5-creating--managing-kaggle-cloud-runs)
+6. [Google Colab Setup & Generation](#6-google-colab-setup--generation)
+7. [Get Stuff Done (GSD) Workflow Guide](#7-get-stuff-done-gsd-workflow-guide)
+8. [CLI Reference & Help Sections](#8-cli-reference--help-sections)
+9. [Repository Architecture & File Map](#9-repository-architecture--file-map)
+10. [Benchmark Roadmap & Phase Tracking](#10-benchmark-roadmap--phase-tracking)
+
+---
+
+## 1. Quickstart (60 Seconds)
+
+Clone the repository and run the pre-flight CPU smoke test in three simple commands:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/aryanthepain/RL_project.git
+cd RL_project
+
+# 2. Create and activate a virtual environment
+python -m venv .venv
+# Windows (PowerShell):
+.venv\Scripts\Activate.ps1
+# Linux / macOS:
+source .venv/bin/activate
+
+# 3. Install dependencies & run deterministic test gate
+pip install -r requirements.txt
+python -m pytest
+```
+
+When you see `105 passed`, your environment is fully operational!
+
+---
+
+## 2. Complete Developer Setup
+
+### Python Environment
+We recommend **Python 3.10, 3.11, or 3.12**.
+
+```bash
+# Check your Python version
+python --version
+```
+
+### PyTorch & CUDA Acceleration
+
+#### For NVIDIA GPU Users (Windows / Linux)
+To enable CUDA 12.x GPU acceleration, install the official CUDA-enabled PyTorch wheel:
+
+```bash
+# CUDA 12.1 wheel
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+
+# Verify GPU detection
+python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}, Device: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"None\"}')"
+```
+
+#### For CPU / Mac / WSL2 Users
+The standard `pip install -r requirements.txt` installs standard PyTorch. The entire training pipeline automatically falls back to CPU if no CUDA device is detected.
+
+### MuJoCo Simulation Harness
+Gymnasium 0.29+ uses the official `mujoco>=3.0.0` Python bindings. No external C++ binaries or license keys are required.
+
+To verify your MuJoCo physics engine installation:
+```bash
+python -c "import gymnasium as gym; env = gym.make('HalfCheetah-v4'); print('MuJoCo initialized successfully:', env.reset()[0].shape)"
+```
+
+---
+
+## 3. Multi-Developer Team Collaboration
+
+Our development team consists of 3 developers collaborating on distributed training and evaluation. To prevent collisions, secrets leaks, and merge conflicts, follow these conventions:
+
+### Team Setup & Separate Kaggle Accounts
+Every developer on the team should maintain their own Kaggle account and API token.
+
+> [!TIP]
+> **Resource Scaling**: Kaggle provides 30 GPU hours/week and up to 2 concurrent GPU jobs per user account. With 3 developers using separate accounts, the team has access to **6 concurrent GPU slots** and **90 hours/week of free cloud compute**, allowing rapid completion of multi-seed benchmark training!
+
+1. Go to [kaggle.com/settings](https://www.kaggle.com/settings).
+2. Scroll to **API** and click **Create New Token** to download `kaggle.json`.
+3. Configure your credentials locally using either:
+   - **Method A (Recommended)**: Copy `.env.example` to `.env` in the project root:
+     ```bash
+     cp .env.example .env
+     ```
+     Fill in your credentials:
+     ```ini
+     KAGGLE_USERNAME=your_kaggle_username
+     KAGGLE_KEY=your_kaggle_api_key
+     ```
+   - **Method B**: Place `kaggle.json` in `~/.kaggle/kaggle.json` (`C:\Users\<username>\.kaggle\kaggle.json` on Windows).
+4. Verify your credentials using the built-in diagnostic probe:
+   ```bash
+   python -c "from src.tqc.remote.kaggle_auth import resolve_kaggle_credentials; print(resolve_kaggle_credentials())"
+   ```
+
+### Git Branching & PR Invariants
+
+- **Default Branch (`main`) is Protected**: Never commit directly to `main`.
+- **Feature & Phase Branches**:
+  - For benchmark trainings: `gsd/phase-09-cheetah-hopper-runs`
+  - For new features: `feat/<name>`
+  - For bug fixes: `fix/<name>`
+- **Link Every PR to a GitHub Issue**:
+  Include `Closes #<issue_number>` in the title and description so GitHub automatically establishes the closure link.
+- **Never Commit Large Artifacts**:
+  Model checkpoints (`.pt`), video files (`.mp4`), and compressed archives (`.tar.gz`) are strictly ignored via `.gitignore`. Always sync large runs using `scripts/sync_remote_artifacts.py`.
+
+---
+
+## 4. Multi-Tier Compute Hierarchy
+
+The system incorporates an automated 4-tier compute resolver that dynamically chooses the best hardware tier available:
+
+```
+Tier 1: Kaggle Remote GPU  ──► Tesla P100 / Dual T4 (Cloud, High Throughput)
+Tier 2: Google Colab GPU   ──► Tesla T4 (Cloud Notebook, Interactive)
+Tier 3: Local NVIDIA GPU   ──► GeForce RTX / Workstation GPU (CUDA)
+Tier 4: Local CPU          ──► Multi-threaded Host Fallback (Smoke Testing)
+```
+
+To probe and inspect available compute tiers on your machine:
+```bash
+python -m src.tqc.compute.dispatcher
+```
+
+Output preview:
+```text
+================================================================================
+TQC Compute Hierarchy Probe Summary
+================================================================================
+Tier 1: KAGGLE     | AVAILABLE | Kaggle API Authenticated (2 GPU slots)
+Tier 2: COLAB      | UNAVAILABLE | Run from Google Colab environment
+Tier 3: LOCAL_GPU  | UNAVAILABLE | PyTorch built without CUDA / no device
+Tier 4: LOCAL_CPU  | AVAILABLE | 16 Logical Cores (Intel/AMD)
+================================================================================
+Selected Default Tier: KAGGLE
+```
+
+---
+
+## 5. Creating & Managing Kaggle Cloud Runs
+
+The Kaggle remote execution pipeline automatically packages code, performs pre-flight smoke tests, submits detached GPU kernels, enforces 2-slot concurrency, and pulls back checkpoints.
+
+### 1. Launching a Pilot Run (HalfCheetah-v4, 1M Steps)
+```bash
+python scripts/run_remote_experiment.py --preset pilot
+```
+
+### 2. Launching Runs for Specific Environments & Seeds
+```bash
+# Run Hopper-v4 on seed 42 for 1,000,000 steps
+python scripts/run_remote_experiment.py --env Hopper-v4 --seed 42 --steps 1000000
+
+# Run Ant-v4 detached in the background
+python scripts/run_remote_experiment.py --env Ant-v4 --seed 43 --steps 1000000 --detach
+```
+
+### 3. Pre-Flight Dry Runs
+Verify packaging and kernel metadata without submitting to the cloud:
+```bash
+python scripts/run_remote_experiment.py --preset pilot --dry-run
+```
+
+### 4. Syncing Remote Results & Validating Integrity
+Once a Kaggle kernel completes, pull the artifacts back to your local `runs/` directory:
+```bash
+python scripts/sync_remote_artifacts.py --kernel-slug <your-username>/kaggle-halfcheetah-pilot-s42
+```
+The synchronizer performs cryptographic SHA256 validation on all weights, validates the `metrics.csv` column schema, and creates downstream video rendering triggers.
+
+### 5. Managing Disk Quota
+Auditing and pruning checkpoint directories:
+```bash
+# Inspect all runs and disk consumption
+python scripts/clean_runs.py --inspect
+
+# Prune intermediate checkpoints (keeps step 0, final, and milestone checkpoints)
+python scripts/clean_runs.py --prune
+```
+
+---
+
+## 6. Google Colab Setup & Generation
+
+We provide an automated generator to produce a standalone, reproducible Google Colab notebook configured with headless MuJoCo, Google Drive checkpoint syncing, and in-notebook video playback.
+
+### Generating the Colab Notebook
+```bash
+python scripts/build_colab_notebook.py
+```
+This generates `notebooks/colab_tqc_benchmark.ipynb`.
+
+### Running in Colab
+1. Upload `notebooks/colab_tqc_benchmark.ipynb` to [Google Colab](https://colab.research.google.com/).
+2. Set runtime type to **GPU** (`Runtime > Change runtime type > T4 GPU`).
+3. Run all cells:
+   - Cell 1: Clones this repository and installs MuJoCo dependencies.
+   - Cell 2: Runs automated pre-flight tier detection.
+   - Cell 3: Executes benchmark training (`HalfCheetah-v4`, `Hopper-v4`, etc.).
+   - Cell 4: Renders evaluation videos and renders them inline using HTML5 video tags.
+   - Cell 5: Syncs checkpoints and metrics directly to your Google Drive.
+
+---
+
+## 7. Get Stuff Done (GSD) Workflow Guide
+
+This project is organized using the **GSD (Get Stuff Done)** autonomous execution framework. GSD maintains persistent context in `.planning/` across sessions and enforces rigorous planning and verification gates.
+
+### Core GSD Commands for Team Members
+
+When working with an Antigravity AI pair programmer, use the following slash commands:
+
+- **`/gsd-phase`**: Multi-phase management. Add, insert, reorder, or inspect phases in `.planning/ROADMAP.md`.
+- **`/gsd-discuss-phase`**: Phase kickoff and context gathering. Discuss requirements, design constraints, and trade-offs before authoring code.
+- **`/gsd-plan-phase`**: Authors the detailed `PLAN.md` specification with atomic tasks, files to modify, and verification commands.
+- **`/gsd-execute-phase`**: Executes planned phases with dependency-aware wave parallelization, automated testing, and atomic commits.
+- **`/gsd-verify-work`**: Conducts conversational UAT (User Acceptance Testing) to ensure all deliverables meet paper fidelity.
+- **`/gsd-ship`**: Prepares the work for merging: verifies all deterministic tests pass, queries open GitHub issues via `gh issue list`, generates PR summaries linking issues (`Closes #...`), and creates the PR.
+- **`/gsd-quick`**: For small fixes, documentation updates, or ad-hoc tasks that do not require multi-plan decomposition.
+
+### The GSD Golden Invariant
+> **No Unplanned Commits**: Never edit codebase files outside of a planned GSD phase or `/gsd-quick` task. This ensures the `.planning/` roadmap and Git history remain 100% in sync across all team members.
+
+---
+
+## 8. CLI Reference & Help Sections
+
+All tools include detailed help documentation via the `--help` flag:
+
+### Main Training Engine
+```bash
+python -m src.tqc.train --help
+```
+Key arguments:
+- `--env`: Gymnasium environment ID (`HalfCheetah-v4`, `Ant-v4`, etc.).
+- `--seed`: Random seed for reproducibility (default: `0`).
+- `--total-timesteps`: Total environment steps (default: `1000000`).
+- `--eval-freq`: Evaluation interval in steps (default: `5000`).
+- `--checkpoint-freq`: Checkpoint frequency in steps (default: `50000`).
+- `--device`: Target device (`cuda`, `cpu`).
+- `--resume`: Resume from existing checkpoint if available.
+
+### Remote Kaggle Orchestrator
+```bash
+python scripts/run_remote_experiment.py --help
+```
+Key arguments:
+- `--preset`: Named preset from `configs/benchmark_matrix.yaml` (`pilot`, `smoke`, `benchmark_suite`).
+- `--env`: Environment ID override.
+- `--seed`: Seed override.
+- `--steps`: Timesteps override.
+- `--dry-run`: Validate packaging without submitting.
+- `--detach`: Return immediately after kernel push.
+
+### Progression Video & Inactivity Truncation
+```bash
+python -m src.tqc.visualize --help
+```
+Key arguments:
+- `--checkpoint-dir`: Path to saved checkpoint directory.
+- `--truncate-inactive`: Automatically truncate frames when the agent falls or stagnates.
+- `--speed-threshold`: Minimum forward speed threshold (default: `0.05`).
+- `--patience-steps`: Consecutive inactive steps before truncating (default: `50`).
+- `--padding-frames`: Trailing frames retained after truncation (default: `15`).
+
+---
+
+## 9. Repository Architecture & File Map
+
+```text
+RL_project/
+├── .github/                       # GitHub collaboration & PR templates
+│   └── pull_request_template.md
+├── configs/                       # Declarative experiment matrix
+│   └── benchmark_matrix.yaml
+├── docs/                          # In-depth technical papers and guides
+│   ├── paper_explanation.md       # Comprehensive mathematical theory
+│   ├── remote_execution.md        # Kaggle execution deep dive
+│   └── progression_visualization.md
+├── notebooks/                     # Colab notebooks
+│   └── colab_tqc_benchmark.ipynb
+├── scripts/                       # Orchestration & utility tools
+│   ├── build_colab_notebook.py    # Generates runnable Colab notebook
+│   ├── clean_runs.py              # Audits and prunes disk quotas
+│   ├── run_remote_experiment.py   # Packages and pushes Kaggle jobs
+│   └── sync_remote_artifacts.py   # Pulls and validates remote weights
+├── src/tqc/                       # Core TQC algorithm library
+│   ├── actor.py                   # Squashed Gaussian policy network
+│   ├── critic.py                  # Quantile critic ensemble (M=5, N=25)
+│   ├── truncation.py              # Top-d truncation operator & Huber loss
+│   ├── buffer.py                  # Circular 1M transition replay buffer
+│   ├── agent.py                   # TQCAgent training & updates
+│   ├── train.py                   # Main training loop
+│   ├── visualize.py               # Video rendering & stagnation detection
+│   ├── compute/                   # Multi-tier hardware dispatcher
+│   └── remote/                    # Kaggle authentication & packaging
+├── tests/                         # 25 test suites (105 tests passing)
+├── ARCHITECTURE.md                # System design & mathematical mapping
+├── CONVENTIONS.md                 # Git branching, PRs, & coding standards
+├── STACK.md                       # Comprehensive tech stack catalog
+├── TESTING.md                     # Verification handbook & test taxonomy
+└── requirements.txt               # Locked reproducible dependencies
+```
+
+---
+
+## 10. Benchmark Roadmap & Phase Tracking
+
+The reproduction is structured across distinct roadmap phases tracked in `.planning/ROADMAP.md`:
+
+| Phase | Description | Status | GitHub Issue |
+|:---:|:---|:---:|:---:|
+| **01** | Theoretical & Algorithmic Documentation | Completed | [#1](https://github.com/aryanthepain/RL_project/issues/1) |
+| **02** | Core Algorithm & Quantile Networks | Completed | [#2](https://github.com/aryanthepain/RL_project/issues/2) |
+| **03** | Environment Harness & Replay Buffer | Completed | [#2](https://github.com/aryanthepain/RL_project/issues/2) |
+| **04** | Benchmark Experiments & Replication Curves | Completed | [#2](https://github.com/aryanthepain/RL_project/issues/2) |
+| **05** | Policy Progression Visualization | Completed | [#5](https://github.com/aryanthepain/RL_project/issues/5), [#6](https://github.com/aryanthepain/RL_project/issues/6) |
+| **06** | Compute Hierarchy & Kaggle Remote Execution | Completed | [#7](https://github.com/aryanthepain/RL_project/issues/7) |
+| **07** | Evaluation Video Inactivity Truncation | Completed | [#8](https://github.com/aryanthepain/RL_project/issues/8) |
+| **08** | Multi-Tier Compute Hierarchy & Colab | Completed | [#4](https://github.com/aryanthepain/RL_project/issues/4) |
+| **09** | Benchmark Training: HalfCheetah-v4 & Hopper-v4 (5 seeds) | Upcoming | [#13](https://github.com/aryanthepain/RL_project/issues/13) |
+| **10** | Benchmark Training: Walker2d-v4 & Ant-v4 (5 seeds) | Upcoming | [#14](https://github.com/aryanthepain/RL_project/issues/14) |
+| **11** | Benchmark Training: Humanoid-v4 & Benchmark Aggregation | Upcoming | [#15](https://github.com/aryanthepain/RL_project/issues/15) |
+| **12** | Team Onboarding, Documentation Suite & Collaboration | Active | [#12](https://github.com/aryanthepain/RL_project/issues/12) |
+
+---
+
+## References
+
+- Arsenii Kuznetsov, Pavel Shvechikov, Alexander Grishin, Dmitry Vetrov. *"Controlling Overestimation Bias with Truncated Mixture of Continuous Distributional Quantile Critics"*. Proceedings of the 37th International Conference on Machine Learning (ICML 2020). [arXiv:2005.04269](https://arxiv.org/abs/2005.04269).
+- Official TQC Reference Implementation: [bayesgroup/tqc_pytorch](https://github.com/bayesgroup/tqc_pytorch).

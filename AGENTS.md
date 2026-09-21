@@ -20,23 +20,39 @@ An academic and empirical reproduction of the ICML 2020 paper "Controlling Overe
 
 ## Technology Stack
 
-Technology stack not yet documented. Will populate after codebase mapping or first phase.
+See [STACK.md](file:///d:/projects/RL_project/STACK.md) for full specifications.
+- **Languages & Runtimes**: Python 3.10–3.12, Windows/Linux/macOS
+- **Frameworks**: PyTorch 2.2+ (CPU & CUDA 12.1/12.4), Gymnasium 0.29+, MuJoCo 3.0+
+- **Scientific**: NumPy, SciPy, Pandas, PyYAML
+- **Visualization**: Matplotlib, Seaborn, OpenCV, ImageIO with imageio-ffmpeg
+- **Compute Tiers**: Tier 1 (Kaggle Cloud GPU) > Tier 2 (Google Colab T4) > Tier 3 (Local NVIDIA GPU) > Tier 4 (Local CPU)
+- **Testing & Tools**: Pytest (105 tests), Git/GitHub CLI (`gh`), GSD Workflow Engine
 <!-- GSD:stack-end -->
 
 <!-- GSD:conventions-start source:CONVENTIONS.md -->
 
 ## Conventions
 
-- **Issue & PR Linkage**: Every PR must query open issues via `gh issue list --state open` and link relevant issues using `Closes #<issue>` / `Fixes #<issue>` in the title and description.
-- **Issue Closure**: Verify all corresponding issues are closed upon merge. If an issue was not closed automatically, immediately comment and close it with a comprehensive completion summary referencing the merged PR and commit SHA.
-- **Phase & Feature Branching**: Never commit phase or feature work directly to the default branch (`main`). At the start of every new phase, create a dedicated feature/phase branch (following `gsd/phase-<N>-<slug>` or prompt the user) so that all work is cleanly isolated until PR merge.
+See [CONVENTIONS.md](file:///d:/projects/RL_project/CONVENTIONS.md) for complete team standards.
+- **Protected Main Branch**: Never commit directly to `main`. Always create feature/phase branches (`gsd/phase-*`, `feat/*`, `fix/*`).
+- **Issue & PR Linkage**: Every PR must query open issues via `gh issue list --state open` and link relevant issues using `Closes #<issue>` / `Fixes #<issue>` in title and description.
+- **Deterministic Verification**: Mandatory local test pass (`python -m pytest`) before staging or creating a PR.
+- **Artifact Hygiene**: Model checkpoints (`.pt`), videos (`.mp4`), and archives are ignored via `.gitignore`. Audit disk with `python scripts/clean_runs.py --inspect`.
+- **Credentials Safety**: Each developer uses separate Kaggle API tokens configured via `.env` or `~/.kaggle/kaggle.json`. Never commit secrets.
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
 
 ## Architecture
 
-Architecture not yet mapped. Follow existing patterns found in the codebase.
+See [ARCHITECTURE.md](file:///d:/projects/RL_project/ARCHITECTURE.md) for complete architectural and mathematical specifications.
+- **Algorithm**: Truncated Quantile Critics (TQC - ICML 2020)
+- **Actor ($\pi_\phi$)**: Squashed Gaussian policy network with reparameterization and tanh bound correction (`src/tqc/actor.py`).
+- **Critic Ensemble**: $M=5$ quantile critics, each predicting $N=25$ quantiles ($M \times N = 125$ atoms) (`src/tqc/critic.py`).
+- **Truncation Operator**: Sorts and drops top $d=5$ atoms across ensemble to mitigate overestimation bias (`src/tqc/truncation.py`).
+- **Loss**: Asymmetric Huber quantile regression loss with threshold $\kappa=1.0$.
+- **Compute Hierarchy**: Automated 4-tier probe and dispatcher (`src/tqc/compute/tier_detector.py`, `dispatcher.py`).
+- **Video Telemetry**: Rolling velocity stagnation detection and inactivity frame truncation (`src/tqc/visualize.py`).
 <!-- GSD:architecture-end -->
 
 <!-- GSD:skills-start source:skills/ -->
