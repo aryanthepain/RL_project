@@ -10,6 +10,10 @@ A systematic 4-phase horizontal roadmap taking the project from foundational the
 - [x] **Phase 2: Core Algorithm & Quantile Networks** - Modular PyTorch implementation of actor, critic ensemble ($M=5, N=25$), Huber quantile loss, truncation operator, and automatic entropy tuning.
 - [x] **Phase 3: Environment Harness, Replay Buffer & Training Pipeline** - 1M replay buffer, Gymnasium MuJoCo environment integration, reproducible seeding, and training loop with evaluation logging (Issue #2 foundation).
 - [x] **Phase 4: Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves** - Benchmarking runs on MuJoCo suite, overestimation bias analysis, and reproduction plotting matching ICML 2020 paper figures (Issue #2 completion).
+- [x] **Phase 5: Policy Progression Visualization Across Spaced Checkpoints** - Focused visualization pipeline for HalfCheetah actor policy across 100 checkpoints with 6-way grid, master montage, and HUD telemetry (Issues #5, #6).
+- [x] **Phase 6: Compute Hierarchy for Multi-Tier Benchmark Experiments** - Priority compute framework with Kaggle GPU remote execution, pre-flight checks, dual-slot queue, and artifact synchronization (Issue #7).
+- [ ] **Phase 7: Evaluation Video Inactivity Truncation and Stagnation Detection** - Early video recording truncation on stationary velocity or stagnation delta thresholds with trailing frame padding (Issue #8).
+- [ ] **Phase 8: Multi-Tier Compute Hierarchy and Google Colab Integration** - Complete multi-tier compute hierarchy (Kaggle > Colab > Local GPU > Local CPU) with runnable Colab notebook and tier auto-detection fallback (Issue #4).
 
 ## Phase Details
 
@@ -89,16 +93,18 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
+|---|---|---|---|
 | 1. Paper Theoretical & Algorithmic Documentation | 1/1 | Complete | 2026-09-09 |
 | 2. Core Algorithm & Quantile Networks | 2/2 | Complete | 2026-09-09 |
 | 3. Environment Harness, Replay Buffer & Training Pipeline | 2/2 | Complete | 2026-09-09 |
 | 4. Multi-Seed Benchmark Experiments, Bias Analysis & Replication Curves | 2/2 | Complete | 2026-09-09 |
 | 5. Policy Progression Visualization Across Spaced Checkpoints | 2/2 | Complete    | 2026-09-09 |
 | 6. Compute Hierarchy for Multi-Tier Benchmark Experiments | 2/2 | Complete | 2026-09-10 |
+| 7. Evaluation Video Inactivity Truncation and Stagnation Detection | 0/0 | Not planned | - |
+| 8. Multi-Tier Compute Hierarchy and Google Colab Integration | 0/0 | Not planned | - |
 
 ### Phase 5: Policy Progression Visualization Across Spaced Checkpoints
 
@@ -140,3 +146,39 @@ Plans:
 - [x] 06-01: Remote Compute Foundation, Kaggle Authentication & Kernel Packager
 - [x] 06-02: Dual-Slot Queue Manager, Artifact Sync, Experiment Runner & Documentation
 
+### Phase 7: Evaluation Video Inactivity Truncation and Stagnation Detection
+
+**Goal**: Implement inactivity and stagnation detection mechanisms in `rollout_checkpoint_with_telemetry` and CLI tools in `src/tqc/visualize.py` to truncate redundant evaluation video frames when agents halt or oscillate in place, preserving trailing padding and evaluation return metrics integrity.
+**Depends on**: Phase 5, Phase 6
+**Requirements**: Issue #8
+**Success Criteria** (what must be TRUE):
+
+  1. `rollout_checkpoint_with_telemetry()` detects when forward speed $|v_x| < \text{speed\_threshold}$ for consecutive steps or when speed delta variance within rolling window is below threshold.
+  2. Video frame recording truncates cleanly while maintaining configurable trailing padding frames to avoid abrupt visual cuts.
+  3. Environment step count and return metrics remain uncorrupted (only video frame recording buffer is truncated).
+  4. CLI arguments (`--truncate-inactive`, thresholds, patience, padding) are exposed in `src/tqc/visualize.py` with sensible defaults.
+  5. Unit tests verify truncation logic on stationary/stagnant and active agent mock rollouts.
+
+**Plans**: 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 7 to break down)
+
+### Phase 8: Multi-Tier Compute Hierarchy and Google Colab Integration
+
+**Goal**: Establish the complete prioritized execution pipeline (Tier 1: Kaggle MCP > Tier 2: Google Colab > Tier 3: Local GPU > Tier 4: Local CPU) with an automated runnable Google Colab notebook for MuJoCo benchmark reproduction and an auto-detection fallback helper.
+**Depends on**: Phase 6, Phase 7
+**Requirements**: Issue #4
+**Success Criteria** (what must be TRUE):
+
+  1. Runnable, self-contained Google Colab notebook (`notebooks/colab_tqc_benchmark.ipynb`) provided for MuJoCo benchmark training with Google Drive / artifact sync.
+  2. Multi-tier compute dispatcher auto-detects highest available environment (Kaggle credentials → Colab runtime → CUDA GPU → CPU fallback).
+  3. Seamless benchmark execution dispatch across tiers for MuJoCo environments (HalfCheetah, Hopper, Walker2d, Ant, Humanoid).
+  4. Unit and integration tests verify fallback resolution and notebook validity.
+
+**Plans**: 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 8 to break down)
