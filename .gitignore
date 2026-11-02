@@ -26,7 +26,6 @@ wheels/
 htmlcov/
 runs/
 logs/
-videos/
 *.pt
 .env
 kaggle.json
