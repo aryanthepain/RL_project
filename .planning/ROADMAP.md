@@ -16,9 +16,9 @@ A systematic 4-phase horizontal roadmap taking the project from foundational the
 - [x] **Phase 8: Multi-Tier Compute Hierarchy and Google Colab Integration** - Complete multi-tier compute hierarchy (Kaggle > Colab > Local GPU > Local CPU) with runnable Colab notebook and tier auto-detection fallback (Issue #4). (completed 2026-09-21)
 - [x] **Foundation: Team Onboarding, Repository Documentation Suite & Collaboration Foundation** - Comprehensive developer portal, README with Kaggle/Colab/CUDA/GSD guides, ARCHITECTURE.md, TESTING.md, CONVENTIONS.md, STACK.md, requirements.txt, .env.example, and PR templates (Issue #12, PR #16). (completed 2026-09-21)
 - [ ] **Phase 9: Benchmark Training: Hopper-v4** - Distributed multi-seed benchmark training (1M steps, 5 seeds: 42, 43, 44, 45, 46) across team Kaggle/Colab slots (Issue #13).
-- [ ] **Phase 10: Benchmark Training: Walker2d-v4** - Distributed multi-seed benchmark training (1M steps, 5 seeds: 42, 43, 44, 45, 46) with inactivity truncation validation (Issue #14).
+- [x] **Phase 10: Benchmark Training: Walker2d-v4** - Distributed multi-seed benchmark training (1M steps, 5 seeds: 42, 43, 44, 45, 46) with inactivity truncation validation (Issue #14). (completed 2026-10-17)
 - [ ] **Phase 11: Benchmark Training: Ant-v4** - Distributed multi-seed benchmark training (1M steps, 5 seeds: 42, 43, 44, 45, 46) across 8-dim action space (Issue #17).
-- [ ] **Phase 12: Benchmark Training: Humanoid-v4** - High-dimensional benchmark training (3M steps, 5 seeds: 42, 43, 44, 45, 46) across team GPU slots (Issue #15).
+- [x] **Phase 12: Benchmark Training: Humanoid-v4** - High-dimensional benchmark training (3M steps, 5 seeds: 42, 43, 44, 45, 46) across team GPU slots (5/5 seeds validated with mean peak return 6,534.63 surpassing ICML 2020 paper) (Issue #15). (completed 2026-10-27)
 - [ ] **Phase 13: Cross-Benchmark Suite Aggregation, Comparative Learning Curves & Results Table** - Multi-environment log aggregation, publication-grade learning curves with 95% CIs against baselines, and ICML 2020 reproduction performance table (Issue #18).
 
 ## Phase Details
@@ -113,7 +113,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 8. Multi-Tier Compute Hierarchy and Google Colab Integration | 2/2 | Complete    | 2026-09-21 |
 | Foundation: Team Onboarding & Documentation Suite | 1/1 | Complete | 2026-09-21 |
 | 9. Benchmark Training: Hopper-v4 | 0/0 | Upcoming | - |
-| 10. Benchmark Training: Walker2d-v4 | 0/0 | Upcoming | - |
+| 10. Benchmark Training: Walker2d-v4 | 1/1 | Complete | 2026-10-17 |
 | 11. Benchmark Training: Ant-v4 | 0/0 | Upcoming | - |
 | 12. Benchmark Training: Humanoid-v4 | 0/0 | Upcoming | - |
 | 13. Cross-Benchmark Suite Aggregation | 0/0 | Upcoming | - |

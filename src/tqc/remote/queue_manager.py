@@ -1,10 +1,22 @@
-"""Dual-slot queue manager for Kaggle GPU workloads enforcing concurrency constraints."""
-
+import os
+import shutil
 import subprocess
+import sys
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
+
+
+def _get_kaggle_cmd() -> str:
+    """Resolve Kaggle CLI path from PATH or current Python virtual environment."""
+    cmd = shutil.which("kaggle") or shutil.which("kaggle.exe")
+    if not cmd:
+        candidate = Path(sys.executable).parent / ("kaggle.exe" if sys.platform == "win32" else "kaggle")
+        if candidate.is_file():
+            return str(candidate)
+    return cmd or "kaggle"
 
 
 class QueueError(Exception):
@@ -95,7 +107,7 @@ class DualSlotQueueManager:
 
     def _default_poll_status(self, kernel_id: str) -> str:
         """Poll kernel status via Kaggle CLI."""
-        cmd = ["kaggle", "kernels", "status", kernel_id]
+        cmd = [_get_kaggle_cmd(), "kernels", "status", kernel_id]
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             output = result.stdout.lower()
@@ -118,7 +130,7 @@ class DualSlotQueueManager:
 
     def _default_dispatch_job(self, job: RemoteJob) -> bool:
         """Push kernel directory via Kaggle CLI."""
-        cmd = ["kaggle", "kernels", "push", "-p", job.kernel_dir]
+        cmd = [_get_kaggle_cmd(), "kernels", "push", "-p", job.kernel_dir]
         if job.accelerator:
             cmd.extend(["--accelerator", job.accelerator])
         try:

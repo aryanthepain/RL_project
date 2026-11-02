@@ -22,6 +22,11 @@ class ArtifactIntegrityError(Exception):
     pass
 
 
+def _get_kaggle_cmd() -> List[str]:
+    """Resolve Kaggle CLI invocation using python -m kaggle to avoid Windows Store shim issues."""
+    return [sys.executable, "-m", "kaggle"]
+
+
 def sha256_file(filepath: Path) -> str:
     """Compute SHA256 hash of a file."""
     h = hashlib.sha256()
@@ -44,7 +49,7 @@ def download_kernel_output(kernel_id: str, download_dir: Union[str, Path]) -> bo
     dest = Path(download_dir)
     dest.mkdir(parents=True, exist_ok=True)
 
-    cmd = ["kaggle", "kernels", "output", kernel_id, "-p", str(dest)]
+    cmd = [*_get_kaggle_cmd(), "kernels", "output", kernel_id, "-p", str(dest)]
     print(f"[ArtifactSync] Executing: {' '.join(cmd)}")
     env = os.environ.copy()
     env["PYTHONUTF8"] = "1"

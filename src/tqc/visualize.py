@@ -233,6 +233,7 @@ def rollout_checkpoint_with_telemetry(
     patience: int = 30,
     padding_frames: int = 15,
     warmup_steps: int = 60,
+    camera_name: Optional[str] = "track",
 ) -> Dict[str, Any]:
     """Execute evaluation rollout of an agent checkpoint while capturing per-frame telemetry.
 
@@ -254,6 +255,7 @@ def rollout_checkpoint_with_telemetry(
         patience: Number of consecutive inactive steps required to trigger truncation.
         padding_frames: Number of trailing frames recorded after truncation trigger.
         warmup_steps: Number of initial steps during which truncation is suppressed.
+        camera_name: Name of camera to track the agent (default: 'track').
 
     Returns:
         Dictionary containing frames, velocities, rewards, returns, actions, q_means,
@@ -262,7 +264,13 @@ def rollout_checkpoint_with_telemetry(
     created_env = False
     if isinstance(env_id, str):
         render_mode = "rgb_array" if render else None
-        env = gym.make(env_id, render_mode=render_mode)
+        if camera_name and render:
+            try:
+                env = gym.make(env_id, render_mode=render_mode, camera_name=camera_name)
+            except Exception:
+                env = gym.make(env_id, render_mode=render_mode)
+        else:
+            env = gym.make(env_id, render_mode=render_mode)
         created_env = True
     else:
         env = env_id
@@ -768,6 +776,12 @@ def main():
         default=0.01,
         help="Velocity standard deviation threshold for in-place stagnation detection",
     )
+    parser.add_argument(
+        "--camera-name",
+        type=str,
+        default="track",
+        help="Camera name to track agent in MuJoCo (default: track)",
+    )
 
     args = parser.parse_args()
     seed_everything(args.seed)
@@ -802,6 +816,7 @@ def main():
             padding_frames=args.padding_frames,
             warmup_steps=args.warmup_steps,
             stagnation_delta=args.stagnation_delta,
+            camera_name=args.camera_name,
         )
         saved = save_video(telemetry["frames"], out_path, fps=args.fps)
         print(f"Saved single video -> {saved}")
