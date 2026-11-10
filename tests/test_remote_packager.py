@@ -44,9 +44,9 @@ class TestRemotePackager(unittest.TestCase):
         self.assertEqual(metadata["code_file"], "run_entry.py")
         self.assertEqual(metadata["language"], "python")
         self.assertEqual(metadata["kernel_type"], "script")
-        self.assertEqual(metadata["enable_gpu"], "true")
-        self.assertEqual(metadata["enable_internet"], "true")
-        self.assertEqual(metadata["is_private"], "true")
+        self.assertTrue(metadata["enable_gpu"])
+        self.assertTrue(metadata["enable_internet"])
+        self.assertTrue(metadata["is_private"])
 
     def test_build_kernel_metadata_missing_args(self):
         """Test metadata builder raises error on empty required fields."""

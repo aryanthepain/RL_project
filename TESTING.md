@@ -75,6 +75,10 @@ The repository includes **25 dedicated test modules** covering every layer of th
 - [`tests/test_remote_queue.py`](file:///d:/projects/RL_project/tests/test_remote_queue.py): Tests asynchronous dual-slot queue management enforcing Kaggle's 2-GPU concurrency limits.
 - [`tests/test_remote_sync.py`](file:///d:/projects/RL_project/tests/test_remote_sync.py): Tests remote artifact pulling, SHA256 checksum verification, and `metrics.csv` schema validation.
 
+### F. Benchmark Suites (Hopper-v4 & Ant-v4)
+- [`tests/test_hopper_benchmark.py`](file:///d:/projects/RL_project/tests/test_hopper_benchmark.py): Validates Hopper-v4 environment harness, 11-dim observation and 3-dim action spaces, ICML 2020 hyperparameter metadata ($d=5$), declarative matrix presets, fast smoke training run, overestimation bias evaluation, and replication plot generation.
+- [`tests/test_ant_benchmark.py`](file:///d:/projects/RL_project/tests/test_ant_benchmark.py): Validates Ant-v4 environment harness across 8-DoF continuous action space and continuous observations, hyperparameter metadata ($d=5$), matrix presets, fast smoke training run, overestimation bias evaluation, and replication plot generation.
+
 ---
 
 ## 4. Mocking & Test Isolation Guidelines

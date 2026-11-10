@@ -31,6 +31,10 @@ videos/
 .env
 kaggle.json
 .build_kernel/
+.build_*/
+.kaggle/
+.test_gpu_nb/
+*.tar.gz
 kaggle_downloads/
 TODO_C_DRIVE.md
 

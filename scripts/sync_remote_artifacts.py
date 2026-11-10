@@ -32,7 +32,7 @@ def sha256_file(filepath: Path) -> str:
 
 
 def download_kernel_output(kernel_id: str, download_dir: Union[str, Path]) -> bool:
-    """Download output artifacts from a completed Kaggle kernel via the Kaggle CLI.
+    """Download output artifacts from a completed Kaggle kernel via the Kaggle API or CLI.
 
     Args:
         kernel_id: Kaggle kernel identifier (e.g. username/slug).
@@ -44,7 +44,26 @@ def download_kernel_output(kernel_id: str, download_dir: Union[str, Path]) -> bo
     dest = Path(download_dir)
     dest.mkdir(parents=True, exist_ok=True)
 
-    cmd = ["kaggle", "kernels", "output", kernel_id, "-p", str(dest)]
+    # Attempt download with automatic retries for resilient network transfer
+    for attempt in range(1, 5):
+        try:
+            from src.tqc.remote.kaggle_auth import resolve_kaggle_credentials
+            resolve_kaggle_credentials()
+            from kaggle.api.kaggle_api_extended import KaggleApi
+            api = KaggleApi()
+            api.authenticate()
+            print(f"[ArtifactSync] Attempt {attempt}: Downloading output for {kernel_id} to {dest} via KaggleApi...")
+            api.kernels_output(kernel_id, path=str(dest))
+            print(f"[ArtifactSync] Download completed for {kernel_id}")
+            return True
+        except Exception as api_err:
+            print(f"[ArtifactSync Warning] Attempt {attempt} encountered: {api_err}")
+            if attempt < 4:
+                import time
+                time.sleep(3 * attempt)
+
+    kaggle_cmd = [shutil.which("kaggle")] if shutil.which("kaggle") else [sys.executable, "-m", "kaggle"]
+    cmd = [*kaggle_cmd, "kernels", "output", kernel_id, "-p", str(dest)]
     print(f"[ArtifactSync] Executing: {' '.join(cmd)}")
     env = os.environ.copy()
     env["PYTHONUTF8"] = "1"
@@ -65,7 +84,7 @@ def verify_and_extract_artifacts(
     download_dir: Union[str, Path],
     target_run_dir: Union[str, Path],
 ) -> Dict[str, Any]:
-    """Unpack artifacts.tar.gz, verify SHA256 checksums, and validate metrics.csv schema.
+    """Unpack artifacts tarball, verify SHA256 checksums, and validate metrics.csv schema.
 
     Args:
         download_dir: Directory containing raw Kaggle kernel output.
@@ -81,24 +100,23 @@ def verify_and_extract_artifacts(
     dest_path = Path(target_run_dir).resolve()
     dest_path.mkdir(parents=True, exist_ok=True)
 
-    # 1. Unpack artifacts.tar.gz if present
-    archive_file = src_path / "artifacts.tar.gz"
-    if not archive_file.is_file():
-        # Check if archive exists inside nested folders
-        nested = list(src_path.glob("**/artifacts.tar.gz"))
-        if nested:
-            archive_file = nested[0]
+    # 1. Unpack any .tar.gz archives found
+    archive_candidates = list(src_path.glob("*.tar.gz")) + list(src_path.glob("**/*.tar.gz"))
+    # Also prioritize artifacts.tar.gz if explicitly named
+    if (src_path / "artifacts.tar.gz").is_file() and (src_path / "artifacts.tar.gz") not in archive_candidates:
+        archive_candidates.insert(0, src_path / "artifacts.tar.gz")
 
-    if archive_file.is_file():
-        print(f"[ArtifactSync] Unpacking {archive_file.name} to {dest_path}...")
-        with tarfile.open(archive_file, "r:gz") as tar:
-            if hasattr(tarfile, "data_filter"):
-                tar.extractall(path=dest_path, filter="data")
-            else:
-                tar.extractall(path=dest_path)
+    if archive_candidates:
+        for archive_file in archive_candidates:
+            print(f"[ArtifactSync] Unpacking {archive_file.name} to {dest_path}...")
+            with tarfile.open(archive_file, "r:gz") as tar:
+                if hasattr(tarfile, "data_filter"):
+                    tar.extractall(path=dest_path, filter="data")
+                else:
+                    tar.extractall(path=dest_path)
     else:
         # Copy raw files if no tar.gz
-        print(f"[ArtifactSync] No artifacts.tar.gz found; copying files directly to {dest_path}...")
+        print(f"[ArtifactSync] No tar.gz archive found; copying files directly to {dest_path}...")
         for item in src_path.iterdir():
             if item.is_file():
                 shutil.copy2(item, dest_path / item.name)
@@ -118,44 +136,47 @@ def verify_and_extract_artifacts(
                 shutil.copy2(item, target)
 
     # 2. Checksum validation
-    checksum_file = src_path / "checksums.sha256"
-    if not checksum_file.is_file():
-        nested_checksums = list(src_path.glob("**/checksums.sha256")) + list(dest_path.glob("**/checksums.sha256"))
-        if nested_checksums:
-            checksum_file = nested_checksums[0]
+    checksum_files = (
+        list(src_path.glob("*.sha256"))
+        + list(src_path.glob("**/*.sha256"))
+        + list(dest_path.glob("*.sha256"))
+        + list(dest_path.glob("**/*.sha256"))
+    )
 
     verified_files = []
-    if checksum_file.is_file():
-        print(f"[ArtifactSync] Validating SHA256 integrity against {checksum_file.name}...")
-        with open(checksum_file, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                parts = line.split(maxsplit=1)
-                if len(parts) != 2:
-                    continue
-                expected_hash, rel_file = parts[0], parts[1].strip()
+    if checksum_files:
+        for checksum_file in checksum_files:
+            print(f"[ArtifactSync] Validating SHA256 integrity against {checksum_file.name}...")
+            with open(checksum_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    parts = line.split(maxsplit=1)
+                    if len(parts) != 2:
+                        continue
+                    expected_hash, rel_file = parts[0], parts[1].strip()
 
-                # Find candidate matching file in dest_path or src_path
-                candidates = [
-                    dest_path / rel_file,
-                    dest_path / Path(rel_file).name,
-                    src_path / rel_file,
-                    src_path / Path(rel_file).name,
-                ]
-                match = next((c for c in candidates if c.is_file()), None)
+                    # Find candidate matching file in dest_path or src_path
+                    candidates = [
+                        dest_path / rel_file,
+                        dest_path / Path(rel_file).name,
+                        src_path / rel_file,
+                        src_path / Path(rel_file).name,
+                    ]
+                    match = next((c for c in candidates if c.is_file()), None)
 
-                if match:
-                    actual_hash = sha256_file(match)
-                    if actual_hash != expected_hash:
-                        raise ArtifactIntegrityError(
-                            f"SHA256 mismatch for {match.name}! Expected {expected_hash}, got {actual_hash}"
-                        )
-                    verified_files.append(str(match.name))
+                    if match:
+                        actual_hash = sha256_file(match)
+                        if actual_hash != expected_hash:
+                            raise ArtifactIntegrityError(
+                                f"SHA256 mismatch for {match.name}! Expected {expected_hash}, got {actual_hash}"
+                            )
+                        verified_files.append(str(match.name))
         print(f"[ArtifactSync] Successfully verified {len(verified_files)} files against checksum manifest.")
     else:
-        print("[ArtifactSync] Warning: No checksums.sha256 found. Proceeding with schema validation.")
+        print("[ArtifactSync] Warning: No checksums manifest found. Proceeding with schema validation.")
+
 
     # 3. Schema validation of metrics.csv
     metrics_csv = dest_path / "metrics.csv"

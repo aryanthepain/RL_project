@@ -11,6 +11,11 @@ from pathlib import Path
 # Ensure project root is on sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+if "KAGGLE_CONFIG_DIR" not in os.environ:
+    default_cfg = Path(__file__).resolve().parent.parent / ".kaggle"
+    if default_cfg.is_dir():
+        os.environ["KAGGLE_CONFIG_DIR"] = str(default_cfg)
+
 from typing import Any, Dict, Optional
 import yaml
 
@@ -39,7 +44,12 @@ def load_matrix_config(config_path: str = "configs/benchmark_matrix.yaml") -> Di
     """Load declarative experiment matrix YAML configuration."""
     cfg_file = Path(config_path)
     if not cfg_file.is_file():
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        repo_root = Path(__file__).resolve().parent.parent
+        candidate = repo_root / config_path
+        if candidate.is_file():
+            cfg_file = candidate
+        else:
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
     with open(cfg_file, "r", encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
@@ -87,11 +97,15 @@ def run_experiment(
     # 1. Resolve Kaggle Credentials
     print("\n[Step 1/6] Resolving Kaggle Credentials...")
     try:
-        username, api_key = resolve_kaggle_credentials(prompt_if_missing=True)
+        username, api_key = resolve_kaggle_credentials(prompt_if_missing=not dry_run)
         print(f"Credentials resolved for user: {username}")
     except KaggleAuthError as e:
-        print(f"[Error] Failed to resolve credentials: {e}")
-        sys.exit(1)
+        if dry_run:
+            print("[Notice] Using dry-run placeholder credentials for packaging preview.")
+            username, api_key = "dryrun_user", "dryrun_key"
+        else:
+            print(f"[Error] Failed to resolve credentials: {e}")
+            sys.exit(1)
 
     if not ensure_kaggle_cli_installed():
         print("[Error] Kaggle CLI is not installed or available in PATH. Please run 'pip install kaggle'.")
@@ -157,6 +171,7 @@ def run_experiment(
         is_private=True,
     )
 
+    repo_root = Path(__file__).resolve().parent.parent
     entrypoint_code = create_remote_entrypoint(
         env_id=env_id,
         seed=seed,
@@ -169,6 +184,7 @@ def run_experiment(
         batch_size=batch_size,
         warmup_steps=warmup_steps,
         eval_episodes=eval_episodes,
+        source_root=repo_root,
     )
 
     # 5. Kernel Packaging
@@ -178,6 +194,7 @@ def run_experiment(
         target_dir=target_build,
         metadata=metadata,
         entrypoint_code=entrypoint_code,
+        source_root=repo_root,
     )
     print(f"Kernel packaged successfully in: {packaged_path}")
 

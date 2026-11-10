@@ -61,7 +61,9 @@ def resolve_kaggle_credentials(
         KaggleAuthError: If credentials cannot be found or resolved.
     """
     # 1. Check kaggle.json
-    target_dir = Path(kaggle_dir) if kaggle_dir else Path.home() / ".kaggle"
+    target_dir = Path(kaggle_dir) if kaggle_dir else (
+        Path(os.environ.get("KAGGLE_CONFIG_DIR")) if os.environ.get("KAGGLE_CONFIG_DIR") else Path.home() / ".kaggle"
+    )
     kaggle_json = target_dir / "kaggle.json"
 
     if kaggle_json.is_file():
@@ -81,7 +83,14 @@ def resolve_kaggle_credentials(
     key = os.environ.get("KAGGLE_KEY", "").strip()
 
     if not (username and key):
-        project_env = Path(env_path) if env_path else Path(".env")
+        if env_path is not None:
+            project_env = Path(env_path)
+        else:
+            project_env = Path(".env")
+            if not project_env.is_file():
+                candidate = Path(__file__).resolve().parent.parent.parent.parent / ".env"
+                if candidate.is_file():
+                    project_env = candidate
         env_vars = _load_env_file(project_env)
         if not username:
             username = env_vars.get("KAGGLE_USERNAME", "").strip()
@@ -157,13 +166,31 @@ def validate_kaggle_credentials(
 
     url = "https://www.kaggle.com/api/v1/datasets/list"
     try:
+        headers = {}
+        auth = None
+        if api_key.startswith("KGAT_"):
+            headers["Authorization"] = f"Bearer {api_key}"
+        else:
+            auth = (username, api_key)
         response = requests.get(
             url,
-            auth=(username, api_key),
+            auth=auth,
+            headers=headers,
             params={"pageSize": 1},
             timeout=timeout,
         )
-        return response.status_code == 200
+        if response.status_code == 200:
+            return True
+        # Fallback to basic auth attempt if bearer returned 401
+        if api_key.startswith("KGAT_"):
+            fb_resp = requests.get(
+                url,
+                auth=(username, api_key),
+                params={"pageSize": 1},
+                timeout=timeout,
+            )
+            return fb_resp.status_code == 200
+        return False
     except requests.RequestException:
         return False
 
@@ -178,7 +205,14 @@ def ensure_kaggle_cli_installed() -> bool:
         return True
 
     try:
+        import importlib.util
+        if importlib.util.find_spec("kaggle") is not None:
+            return True
+    except Exception:
+        pass
+
+    try:
         import kaggle  # noqa: F401
         return True
-    except ImportError:
+    except Exception:
         return False

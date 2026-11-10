@@ -53,10 +53,10 @@ def build_kernel_metadata(
         "code_file": code_file,
         "language": "python",
         "kernel_type": "script",
-        "is_private": "true" if is_private else "false",
-        "enable_gpu": "true" if enable_gpu else "false",
-        "enable_tpu": "false",
-        "enable_internet": "true" if enable_internet else "false",
+        "is_private": bool(is_private),
+        "enable_gpu": bool(enable_gpu),
+        "enable_tpu": False,
+        "enable_internet": bool(enable_internet),
         "dataset_sources": [],
         "competition_sources": [],
         "kernel_sources": [],
@@ -286,6 +286,11 @@ def package_kernel_directory(
     # 3. Compress source directory into tqc_source.tar.gz
     root = Path(source_root).resolve() if source_root else Path.cwd().resolve()
     src_dir = root / "src"
+    if not src_dir.is_dir():
+        for parent in [Path(__file__).resolve().parent.parent.parent.parent, *root.parents]:
+            if (parent / "src").is_dir():
+                src_dir = parent / "src"
+                break
     if not src_dir.is_dir():
         raise KagglePackagingError(f"Cannot find source directory at {src_dir}")
 

@@ -1,6 +1,9 @@
 """Dual-slot queue manager for Kaggle GPU workloads enforcing concurrency constraints."""
 
+import os
+import shutil
 import subprocess
+import sys
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -95,9 +98,10 @@ class DualSlotQueueManager:
 
     def _default_poll_status(self, kernel_id: str) -> str:
         """Poll kernel status via Kaggle CLI."""
-        cmd = ["kaggle", "kernels", "status", kernel_id]
+        kaggle_cmd = [shutil.which("kaggle")] if shutil.which("kaggle") else [sys.executable, "-m", "kaggle"]
+        cmd = [*kaggle_cmd, "kernels", "status", kernel_id]
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True, env=os.environ.copy())
             output = result.stdout.lower()
             if "complete" in output:
                 return "complete"
@@ -118,12 +122,17 @@ class DualSlotQueueManager:
 
     def _default_dispatch_job(self, job: RemoteJob) -> bool:
         """Push kernel directory via Kaggle CLI."""
-        cmd = ["kaggle", "kernels", "push", "-p", job.kernel_dir]
+        kaggle_cmd = [shutil.which("kaggle")] if shutil.which("kaggle") else [sys.executable, "-m", "kaggle"]
+        cmd = [*kaggle_cmd, "kernels", "push", "-p", job.kernel_dir]
         if job.accelerator:
             cmd.extend(["--accelerator", job.accelerator])
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            res = subprocess.run(cmd, capture_output=True, text=True, check=True, env=os.environ.copy())
             return True
+        except subprocess.CalledProcessError as e:
+            err_msg = (e.stderr or e.stdout or str(e)).strip()
+            job.error_message = err_msg
+            return False
         except Exception as e:
             job.error_message = str(e)
             return False

@@ -290,8 +290,23 @@ def rollout_checkpoint_with_telemetry(
     recording_active = bool(render)
 
     for step in range(max_steps):
-        # D-04: env.render() is skipped once truncation & trailing padding finish
-        raw_frame = env.render() if (render and recording_active) else None
+        # D-04: Update camera to dynamically track the robot torso in 3D so it never leaves the frame
+        if render and recording_active:
+            try:
+                unwrapped = getattr(env, "unwrapped", env)
+                if hasattr(unwrapped, "mujoco_renderer") and hasattr(unwrapped, "data"):
+                    viewer = unwrapped.mujoco_renderer._get_viewer("rgb_array")
+                    if viewer is not None and hasattr(viewer, "cam"):
+                        body_idx = 1 if unwrapped.model.nbody > 1 else 0
+                        torso_pos = unwrapped.data.xpos[body_idx]
+                        viewer.cam.lookat[0] = torso_pos[0]
+                        viewer.cam.lookat[1] = torso_pos[1]
+                        viewer.cam.lookat[2] = torso_pos[2]
+            except Exception:
+                pass
+            raw_frame = env.render()
+        else:
+            raw_frame = None
         action = agent.select_action(state, deterministic=True)
 
         # Compute critic Q-mean estimate for current (state, action)
@@ -341,6 +356,11 @@ def rollout_checkpoint_with_telemetry(
         state = next_state
 
         if terminated or truncated:
+            # For short rollouts (e.g. early falls), pad trailing frames so viewer can see the result
+            if render and recording_active and raw_frame is not None and len(frames) < 60:
+                pad_count = min(30, 60 - len(frames))
+                for _ in range(pad_count):
+                    frames.append(frame_to_store)
             if detector is not None and not detector.is_truncated:
                 detector.completion_reason = "env_terminated"
             break

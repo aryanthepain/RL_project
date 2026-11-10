@@ -3,7 +3,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.2%2B-ee4c2c.svg)](https://pytorch.org/)
 [![Gymnasium](https://img.shields.io/badge/Gymnasium-MuJoCo%20Continuous%20Control-green.svg)](https://gymnasium.farama.org/)
-[![Tests](https://img.shields.io/badge/Tests-105%20Passing-brightgreen.svg)](TESTING.md)
+[![Tests](https://img.shields.io/badge/Tests-113%20Passing-brightgreen.svg)](TESTING.md)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
 An academic and empirical reproduction of the ICML 2020 paper:  
@@ -389,11 +389,16 @@ RL_project/
 │   ├── paper_explanation.md       # Comprehensive mathematical theory
 │   ├── remote_execution.md        # Kaggle execution deep dive
 │   └── progression_visualization.md
-├── notebooks/                     # Colab notebooks
-│   └── colab_tqc_benchmark.ipynb
+├── notebooks/                     # Colab & Kaggle notebooks
+│   ├── colab_tqc_benchmark.ipynb
+│   ├── kaggle_tqc_hopper_phase09.ipynb  # Phase 9: Hopper-v4 on Kaggle GPU
+│   └── kaggle_tqc_ant_phase11.ipynb     # Phase 11: Ant-v4 on Kaggle GPU
 ├── scripts/                       # Orchestration & utility tools
 │   ├── build_colab_notebook.py    # Generates runnable Colab notebook
+│   ├── build_kaggle_notebooks.py  # Generates runnable Kaggle notebooks
 │   ├── clean_runs.py              # Audits and prunes disk quotas
+│   ├── run_ant_benchmark.py       # Phase 11: Ant-v4 multi-seed orchestrator
+│   ├── run_hopper_benchmark.py    # Phase 9: Hopper-v4 multi-seed orchestrator
 │   ├── run_remote_experiment.py   # Packages and pushes Kaggle jobs
 │   └── sync_remote_artifacts.py   # Pulls and validates remote weights
 ├── src/tqc/                       # Core TQC algorithm library
@@ -431,9 +436,9 @@ The reproduction is structured across distinct roadmap phases tracked in `.plann
 | **07** | Evaluation Video Inactivity Truncation | Completed | [#8](https://github.com/aryanthepain/RL_project/issues/8) |
 | **08** | Multi-Tier Compute Hierarchy & Colab | Completed | [#4](https://github.com/aryanthepain/RL_project/issues/4) |
 | **Foundation** | Team Onboarding, Documentation Suite & Collaboration | Completed | [#12](https://github.com/aryanthepain/RL_project/issues/12) |
-| **09** | Benchmark Training: Hopper-v4 (5 seeds) | Upcoming | [#13](https://github.com/aryanthepain/RL_project/issues/13) |
+| **09** | Benchmark Training: Hopper-v4 (5 seeds) | Completed | [#13](https://github.com/aryanthepain/RL_project/issues/13) |
 | **10** | Benchmark Training: Walker2d-v4 (5 seeds) | Upcoming | [#14](https://github.com/aryanthepain/RL_project/issues/14) |
-| **11** | Benchmark Training: Ant-v4 (5 seeds) | Upcoming | [#17](https://github.com/aryanthepain/RL_project/issues/17) |
+| **11** | Benchmark Training: Ant-v4 (5 seeds) | Completed | [#17](https://github.com/aryanthepain/RL_project/issues/17) |
 | **12** | Benchmark Training: Humanoid-v4 (5 seeds) | Upcoming | [#15](https://github.com/aryanthepain/RL_project/issues/15) |
 | **13** | Cross-Benchmark Suite Aggregation & Replication Curves | Upcoming | [#18](https://github.com/aryanthepain/RL_project/issues/18) |
 

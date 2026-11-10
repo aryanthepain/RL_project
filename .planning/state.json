@@ -42,12 +42,22 @@
       "number": "8",
       "name": "Multi-Tier Compute Hierarchy and Google Colab Integration",
       "status": "complete"
+    },
+    {
+      "number": "9",
+      "name": "Benchmark Training: Hopper-v4",
+      "status": "complete"
+    },
+    {
+      "number": "11",
+      "name": "Benchmark Training: Ant-v4",
+      "status": "complete"
     }
   ],
   "next": {
-    "command": "/gsd-new-milestone",
-    "label": "Start a new milestone",
-    "reason": "All phases complete — start a new milestone"
+    "command": "/gsd-progress",
+    "label": "Continue roadmap progress",
+    "reason": "Phase 9 and 11 complete"
   },
-  "updated_at": "2026-09-21T14:24:30.972Z"
+  "updated_at": "2026-11-06T12:58:00.000Z"
 }
